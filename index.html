@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!--
+   ______                            __
+  / ____/___  ____ ___  ____  __  __/ /____  _____
+ / /   / __ \/ __ `__ \/ __ \/ / / / __/ _ \/ ___/
+/ /___/ /_/ / / / / / / /_/ / /_/ / /_/  __/ /
+\____/\____/_/ /_/ /_/ .___/\__,_/\__/\___/_/
+                    /_/
+        Created with Perplexity Computer
+        https://www.perplexity.ai/computer
+-->
+
+<!-- Perplexity Computer Attribution — SEO Meta Tags -->
+<meta name="generator" content="Perplexity Computer">
+<meta name="author" content="Perplexity Computer">
+<meta property="og:see_also" content="https://www.perplexity.ai/computer">
+<link rel="author" href="https://www.perplexity.ai/computer">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Junior Portfolio Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to content</a>
+<div class="dashboard">
+  <!-- Sidebar -->
+  <aside class="sidebar" role="navigation" aria-label="Main navigation">
+    <div class="sidebar-logo">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-label="Junior Portfolio Logo">
+        <rect x="2" y="2" width="28" height="28" rx="6" stroke="#20808D" stroke-width="2.5"/>
+        <path d="M10 22V14l6-4 6 4v8" stroke="#20808D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M10 22h12" stroke="#20808D" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="16" cy="16" r="2" fill="#20808D"/>
+      </svg>
+      <span class="logo-text">Junior Portfolio</span>
+    </div>
+    <nav>
+      <ul class="nav-list">
+        <li><button class="nav-btn active" data-tab="overview" aria-current="page">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="1" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="10" y="1" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="1" y="10" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><rect x="10" y="10" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>
+          Overview</button></li>
+        <li><button class="nav-btn" data-tab="geography">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="currentColor" stroke-width="1.5"/><ellipse cx="9" cy="9" rx="3.5" ry="7.5" stroke="currentColor" stroke-width="1.2"/><line x1="1.5" y1="9" x2="16.5" y2="9" stroke="currentColor" stroke-width="1.2"/></svg>
+          Geography</button></li>
+        <li><button class="nav-btn" data-tab="sectors">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="10" width="4" height="7" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="6" width="4" height="11" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="2" width="4" height="15" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+          Sectors</button></li>
+        <li><button class="nav-btn" data-tab="diversification">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="6" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/></svg>
+          Diversification</button></li>
+        <li><button class="nav-btn" data-tab="proscons">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 5h12M3 9h8M3 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Pros &amp; Cons</button></li>
+        <li><button class="nav-btn" data-tab="compounding">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 15 L6 10 L10 12 L16 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3h4v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Compounding</button></li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-meta">THB Portfolio</div>
+      <div class="sidebar-meta">Last updated: Mar 2026</div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main" id="main-content">
+    <!-- Tab: Overview -->
+    <section class="tab-content active" id="tab-overview">
+      <div class="page-header">
+        <h1>Portfolio Overview</h1>
+        <p class="page-subtitle">10 holdings across 4 sleeves — THB 1,000,000 total investment</p>
+      </div>
+      <div class="kpi-grid" id="kpi-grid">
+        <!-- KPIs injected by JS -->
+      </div>
+      <div class="content-grid content-grid--overview">
+        <div class="card">
+          <h2 class="card-title">Allocation by Sleeve</h2>
+          <div class="chart-container chart-container--donut">
+            <canvas id="chart-sleeve-donut"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Holdings by Expected Return</h2>
+          <div class="chart-container chart-container--tall">
+            <canvas id="chart-holdings-bar"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Holdings Detail</h2>
+        <div class="table-wrapper">
+          <table class="data-table" id="holdings-table">
+            <thead>
+              <tr>
+                <th data-sort="ticker">Ticker</th>
+                <th data-sort="name">Name</th>
+                <th data-sort="sleeve">Sleeve</th>
+                <th data-sort="target" class="num">Target %</th>
+                <th data-sort="amount" class="num">Amount (THB)</th>
+                <th data-sort="returns" class="num">Exp. Return</th>
+                <th data-sort="expense" class="num">Expense</th>
+                <th data-sort="maxdd" class="num">Max DD</th>
+              </tr>
+            </thead>
+            <tbody id="holdings-tbody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab: Geography -->
+    <section class="tab-content" id="tab-geography">
+      <div class="page-header">
+        <h1>Geographic Concentration</h1>
+        <p class="page-subtitle">Weighted exposure across all holdings by country and region</p>
+      </div>
+      <div class="content-grid content-grid--2col">
+        <div class="card">
+          <h2 class="card-title">Top Countries by Portfolio Exposure</h2>
+          <div class="chart-container chart-container--tall">
+            <canvas id="chart-geo-bar"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Regional Breakdown</h2>
+          <div class="chart-container chart-container--donut">
+            <canvas id="chart-region-donut"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Country Exposure Detail</h2>
+        <div class="table-wrapper">
+          <table class="data-table" id="geo-table">
+            <thead>
+              <tr>
+                <th>Country</th>
+                <th class="num">Weighted Exposure %</th>
+                <th>Primary Contributors</th>
+              </tr>
+            </thead>
+            <tbody id="geo-tbody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab: Sectors -->
+    <section class="tab-content" id="tab-sectors">
+      <div class="page-header">
+        <h1>Sector Allocation</h1>
+        <p class="page-subtitle">Weighted sector exposure across equity and alternative holdings</p>
+      </div>
+      <div class="content-grid content-grid--2col">
+        <div class="card">
+          <h2 class="card-title">Sector Allocation (Weighted)</h2>
+          <div class="chart-container chart-container--tall">
+            <canvas id="chart-sector-bar"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Concentration Alerts</h2>
+          <div id="sector-alerts" class="alerts-container">
+          </div>
+          <h3 class="card-subtitle">Top 5 Sectors</h3>
+          <div class="chart-container chart-container--donut">
+            <canvas id="chart-sector-donut"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab: Diversification -->
+    <section class="tab-content" id="tab-diversification">
+      <div class="page-header">
+        <h1>Diversification Analysis</h1>
+        <p class="page-subtitle">Correlation, risk metrics, and dollar weakening impact</p>
+      </div>
+      <div class="content-grid content-grid--2col">
+        <div class="card">
+          <h2 class="card-title">Approximate Correlation Matrix</h2>
+          <div class="chart-container chart-container--tall">
+            <canvas id="chart-correlation"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Diversification Score</h2>
+          <div id="diversification-score" class="score-container">
+          </div>
+          <h3 class="card-subtitle">Risk Metrics Summary</h3>
+          <div id="risk-metrics" class="metrics-grid">
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Dollar Weakening Impact</h2>
+        <p class="card-desc">Assessment of how USD depreciation affects each holding for THB-based investors</p>
+        <div class="table-wrapper">
+          <table class="data-table" id="dollar-table">
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th>Fund</th>
+                <th>Weight</th>
+                <th>Impact</th>
+                <th>Explanation</th>
+              </tr>
+            </thead>
+            <tbody id="dollar-tbody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab: Pros & Cons -->
+    <section class="tab-content" id="tab-proscons">
+      <div class="page-header">
+        <h1>Pros &amp; Cons Analysis</h1>
+        <p class="page-subtitle">Detailed assessment of each holding's strengths and weaknesses</p>
+      </div>
+      <div id="proscons-grid" class="proscons-grid">
+      </div>
+    </section>
+
+    <!-- Tab: Compounding -->
+    <section class="tab-content" id="tab-compounding">
+      <div class="page-header">
+        <h1>Compounding Projector</h1>
+        <p class="page-subtitle">20-year growth projection with scenario analysis</p>
+      </div>
+      <div class="card compounding-input-card">
+        <div class="compounding-controls">
+          <div class="input-group">
+            <label for="investment-input">Total Investment (THB)</label>
+            <input type="text" id="investment-input" value="1,000,000" class="investment-input" inputmode="numeric">
+          </div>
+          <div class="scenario-kpis" id="scenario-kpis">
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">20-Year Growth Projection</h2>
+        <div class="chart-container chart-container--wide">
+          <canvas id="chart-compounding"></canvas>
+        </div>
+      </div>
+      <div class="content-grid content-grid--3col">
+        <div class="card scenario-card scenario-card--base">
+          <div class="scenario-label">Base Case</div>
+          <div class="scenario-rate" id="base-rate"></div>
+          <div class="scenario-final" id="base-final"></div>
+          <div class="scenario-gain" id="base-gain"></div>
+        </div>
+        <div class="card scenario-card scenario-card--boost">
+          <div class="scenario-label">Dollar Erosion Boost</div>
+          <div class="scenario-rate" id="boost-rate"></div>
+          <div class="scenario-final" id="boost-final"></div>
+          <div class="scenario-gain" id="boost-gain"></div>
+        </div>
+        <div class="card scenario-card scenario-card--stress">
+          <div class="scenario-label">Conservative / Stress</div>
+          <div class="scenario-rate" id="stress-rate"></div>
+          <div class="scenario-final" id="stress-final"></div>
+          <div class="scenario-gain" id="stress-gain"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Year-by-Year Projection (Base Case)</h2>
+        <div class="table-wrapper">
+          <table class="data-table" id="compounding-table">
+            <thead>
+              <tr>
+                <th class="num">Year</th>
+                <th class="num">Beginning Balance</th>
+                <th class="num">Annual Return</th>
+                <th class="num">Ending Balance</th>
+              </tr>
+            </thead>
+            <tbody id="compounding-tbody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card macro-notes">
+        <h2 class="card-title">Macro Projection Notes</h2>
+        <div class="macro-note">
+          <h3>Slow Dollar Erosion Scenario</h3>
+          <p>With ~60% of holdings in non-USD assets, a gradual USD decline of 2–3% annually could add 1–2% to portfolio returns via currency translation. Commodities (HGER) and EM (EMXC) benefit most. DBMF's trend-following adapts dynamically.</p>
+        </div>
+        <div class="macro-note">
+          <h3>Current Political Climate</h3>
+          <p>Rising geopolitical fragmentation, de-dollarization trends, and fiscal expansion in G7 support the inflation-hedge positioning (HGER, IGF). Thailand's fixed income provides stability. Japan (DXJ) benefits from yen weakness cycle. EM ex-China (EMXC) captures supply chain diversification flows.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="dashboard-footer">
+      <span>Junior Portfolio Dashboard — For educational purposes only</span>
+      <a href="https://www.perplexity.ai/computer" target="_blank" rel="noopener noreferrer">Created with Perplexity Computer</a>
+    </footer>
+  </main>
+</div>
+<script src="./app.js" defer></script>
+</body>
+</html>
