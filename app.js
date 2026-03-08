@@ -284,7 +284,7 @@
   /* Store original (default) weights for reset */
   var DEFAULT_WEIGHTS = HOLDINGS.map(function (h) { return h.target; });
 
-  var tabInitialized = { overview: true, geography: false, sectors: false, diversification: false, proscons: false, weights: false, compounding: false };
+  var tabInitialized = { overview: true, geography: false, sectors: false, diversification: false, learn: false, proscons: false, weights: false, compounding: false };
 
   function initTab(tabId) {
     if (tabInitialized[tabId]) { return; }
@@ -293,6 +293,7 @@
       case "geography": renderGeoCharts(); break;
       case "sectors": renderSectorCharts(); break;
       case "diversification": renderCorrelationMatrix(); renderDiversificationScore(); renderRiskMetrics(); renderDollarTable(); break;
+      case "learn": renderLearnCards(); break;
       case "proscons": renderProsConsCards(); break;
       case "weights": renderWeightsTab(); break;
       case "compounding": renderCompounding(); initCompoundingInput(); break;
@@ -870,7 +871,90 @@
   }
 
   /* ------------------------------------------
-     TAB 5: PROS & CONS
+     TAB 5: LEARN — Beginner-Friendly Asset Explanations
+  ------------------------------------------ */
+  var LEARN_DATA = {
+    "KFAFIX-A": {
+      explain: "This is a Thai bond fund that invests your money in loans to Thai companies and government agencies. Think of it like lending money to stable Thai organizations — they pay you a small but steady interest. It\u2019s one of the safest parts of your portfolio, designed to keep things stable when stock markets get bumpy.",
+      tip: "Bonds are like IOUs. You lend money, and the borrower pays you back with interest. Thai bonds are especially stable for a THB investor because there\u2019s no currency risk.",
+      iconClass: "fi"
+    },
+    "K-APB-A(A)": {
+      explain: "This fund buys bonds issued by companies and governments across Asia — India, Hong Kong, Japan, Saudi Arabia, and more. It\u2019s still bonds (loans), but spread across the whole Asia-Pacific region. It pays more than Thai-only bonds because it takes on a bit more risk from different countries and currencies.",
+      tip: "The \u201CAsia-Pacific\u201D label means your money is earning interest from borrowers across the region, giving you exposure beyond Thailand while still keeping things relatively stable.",
+      iconClass: "fi"
+    },
+    "CSPX": {
+      explain: "This is an index fund that owns tiny slices of the 500 largest US companies — Apple, Microsoft, Amazon, Google, and hundreds more. When these companies grow and profit, your investment grows too. It\u2019s the single most popular way to invest in the US stock market.",
+      tip: "An index fund doesn\u2019t try to pick winners — it owns everything in the index. This means lower fees and broad diversification. The S&P 500 has historically returned about 10% per year over the long run.",
+      iconClass: "eq"
+    },
+    "TDIV": {
+      explain: "This fund focuses on large, established companies across the developed world that regularly pay dividends — cash payments to shareholders. These are companies in the US, UK, Switzerland, France, and more that share their profits with you every quarter.",
+      tip: "Dividend stocks tend to be mature, profitable companies. The regular cash payments can provide income even when share prices aren\u2019t rising. Think of it like owning rental property — you earn both from price appreciation and regular payouts.",
+      iconClass: "eq"
+    },
+    "VAPX": {
+      explain: "This fund gives you ownership in companies across developed Asia-Pacific countries — primarily Australia and South Korea, plus Hong Kong and Singapore. These are established economies with mature stock markets, but outside of Japan (which is covered separately by DXJ).",
+      tip: "Asia-Pacific is home to some of the world\u2019s fastest-growing economies. This fund captures that growth through established companies like Samsung, BHP, and Commonwealth Bank.",
+      iconClass: "eq"
+    },
+    "DXJ": {
+      explain: "This fund invests in Japanese companies — Toyota, Sony, Mitsubishi, and many more — but with a special feature: it hedges away the yen currency risk. That means you get the returns of Japanese stocks without worrying about the yen going up or down against the dollar.",
+      tip: "Japan is the world\u2019s 4th largest economy with globally dominant exporters. The currency hedge is like insurance — it removes one layer of risk so you can focus purely on how Japanese companies perform.",
+      iconClass: "eq"
+    },
+    "EMXC": {
+      explain: "This fund invests in emerging market countries — Taiwan, India, South Korea, Brazil, South Africa — but deliberately excludes China. These are fast-growing economies where companies can grow quickly, though with more volatility than developed markets.",
+      tip: "Emerging markets offer higher growth potential because these economies are still developing. Excluding China removes concerns about Chinese regulatory crackdowns and geopolitical tensions.",
+      iconClass: "eq"
+    },
+    "HGER": {
+      explain: "This fund invests in physical commodities — gold, silver, oil, copper, wheat, and more. About a third is in gold alone. Commodities are real, tangible things the world needs, and their prices tend to rise when inflation goes up or the dollar weakens.",
+      tip: "Commodities are the original inflation hedge. When everyday prices rise, commodity producers benefit. Gold especially has been a store of value for thousands of years and tends to shine during uncertain times.",
+      iconClass: "alt"
+    },
+    "IGF": {
+      explain: "This fund owns shares in companies that build and operate essential infrastructure — toll roads, airports, power plants, water utilities, cell towers, and pipelines around the world. These are things society always needs, providing stable and predictable income.",
+      tip: "Infrastructure assets are often called \u201Creal assets\u201D because they\u2019re physical and essential. Many have government contracts with built-in inflation adjustments, meaning their revenues naturally keep up with rising prices.",
+      iconClass: "alt"
+    },
+    "DBMF": {
+      explain: "This is a \u201Cmanaged futures\u201D fund — it uses a computer-driven strategy to follow market trends across stocks, bonds, currencies, and commodities. When markets are falling, it can bet on further declines (go short). When markets rise, it rides the trend up. It\u2019s designed to make money in crashes when everything else is losing.",
+      tip: "Think of this as portfolio insurance. In 2022 when both stocks and bonds fell sharply, this fund gained +31%. It won\u2019t always be the highest performer, but it\u2019s there to protect you during the worst times.",
+      iconClass: "hedge"
+    }
+  };
+
+  function renderLearnCards() {
+    var grid = document.getElementById("learn-grid");
+    grid.innerHTML = HOLDINGS.map(function (h) {
+      var ld = LEARN_DATA[h.ticker] || { explain: "", tip: "", iconClass: "fi" };
+      var iconCls = "learn-card-icon learn-card-icon--" + ld.iconClass;
+      var initials = h.ticker.substring(0, 2);
+
+      return '<div class="learn-card">' +
+        '<div class="learn-card-header">' +
+          '<div class="' + iconCls + '">' + initials + '</div>' +
+          '<div class="learn-card-title">' +
+            '<div class="learn-card-ticker">' + h.ticker + '</div>' +
+            '<div class="learn-card-name">' + h.name + '</div>' +
+          '</div>' +
+          '<span class="learn-card-sleeve">' + h.sleeve + '</span>' +
+        '</div>' +
+        '<div class="learn-card-explain">' + ld.explain + '</div>' +
+        '<div class="learn-card-meta">' +
+          '<div class="learn-meta-item"><span class="learn-meta-label">Target</span><span class="learn-meta-value">' + fmtPctRaw(h.target * 100) + '</span></div>' +
+          '<div class="learn-meta-item"><span class="learn-meta-label">Exp. Return</span><span class="learn-meta-value">' + fmtPctRaw(h.returns * 100) + '</span></div>' +
+          '<div class="learn-meta-item"><span class="learn-meta-label">Cost</span><span class="learn-meta-value">' + fmtPctRaw(h.expense * 100) + '</span></div>' +
+        '</div>' +
+        '<div class="learn-card-tip"><strong>Why it matters:</strong> ' + ld.tip + '</div>' +
+      '</div>';
+    }).join("");
+  }
+
+  /* ------------------------------------------
+     TAB 6: PROS & CONS
   ------------------------------------------ */
   function renderProsConsCards() {
     var grid = document.getElementById("proscons-grid");
@@ -1297,6 +1381,7 @@
     tabInitialized.geography = false;
     tabInitialized.sectors = false;
     tabInitialized.diversification = false;
+    tabInitialized.learn = false;
     tabInitialized.proscons = false;
     tabInitialized.compounding = false;
 
