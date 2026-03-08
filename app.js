@@ -281,7 +281,10 @@
     });
   }
 
-  var tabInitialized = { overview: true, geography: false, sectors: false, diversification: false, proscons: false, compounding: false };
+  /* Store original (default) weights for reset */
+  var DEFAULT_WEIGHTS = HOLDINGS.map(function (h) { return h.target; });
+
+  var tabInitialized = { overview: true, geography: false, sectors: false, diversification: false, proscons: false, weights: false, compounding: false };
 
   function initTab(tabId) {
     if (tabInitialized[tabId]) { return; }
@@ -291,6 +294,7 @@
       case "sectors": renderSectorCharts(); break;
       case "diversification": renderCorrelationMatrix(); renderDiversificationScore(); renderRiskMetrics(); renderDollarTable(); break;
       case "proscons": renderProsConsCards(); break;
+      case "weights": renderWeightsTab(); break;
       case "compounding": renderCompounding(); initCompoundingInput(); break;
     }
   }
@@ -910,7 +914,403 @@
   }
 
   /* ------------------------------------------
-     TAB 6: COMPOUNDING
+     TAB 6: WEIGHTS — Two-Level Lock & Rebalance
+  ------------------------------------------ */
+
+  /* State: sleeve weights (percent 0-100) and locks */
+  var sleeveWeights = {};
+  var sleeveLocked  = {};
+  /* State: asset share within sleeve (percent 0-100, sums to 100 per sleeve) */
+  var assetShares   = {};  /* keyed by HOLDINGS index */
+  var assetLocked   = {};  /* keyed by HOLDINGS index */
+
+  /* SVG icons for lock/unlock */
+  var ICON_LOCK   = '<svg class="icon-lock" width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  var ICON_UNLOCK = '<svg class="icon-unlock" width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+
+  function initWeightsState() {
+    /* Compute initial sleeve weights from HOLDINGS targets */
+    SLEEVE_ORDER.forEach(function (s) {
+      var total = 0;
+      HOLDINGS.forEach(function (h) { if (h.sleeve === s) { total += h.target; } });
+      sleeveWeights[s] = +(total * 100).toFixed(2);
+      sleeveLocked[s] = false;
+    });
+    /* Compute initial asset shares (% within their sleeve, summing to 100) */
+    HOLDINGS.forEach(function (h, idx) {
+      var sleeveTotal = 0;
+      HOLDINGS.forEach(function (h2) { if (h2.sleeve === h.sleeve) { sleeveTotal += h2.target; } });
+      assetShares[idx] = sleeveTotal > 0 ? +((h.target / sleeveTotal) * 100).toFixed(2) : 0;
+      assetLocked[idx] = false;
+    });
+  }
+
+  /* Recompute HOLDINGS.target and .amount from sleeve weights + asset shares */
+  function syncHoldingsFromState() {
+    HOLDINGS.forEach(function (h, idx) {
+      var sleevePct = sleeveWeights[h.sleeve] / 100;  /* e.g. 0.55 */
+      var sharePct  = assetShares[idx] / 100;          /* e.g. 0.29 within sleeve */
+      h.target = +(sleevePct * sharePct).toFixed(6);
+      h.amount = Math.round(h.target * 1000000);
+    });
+  }
+
+  /* ---------- Render ---------- */
+  function renderWeightsTab() {
+    initWeightsState();
+    renderWeightsKPIs();
+    renderSleeveSliders();
+    renderWeightsTotalBar();
+    renderAssetSliders();
+    bindResetButton();
+  }
+
+  function renderWeightsKPIs() {
+    var el = document.getElementById("weights-kpi-strip");
+    if (!el) { return; }
+    var wr  = computeWeightedReturn();
+    var we  = computeWeightedExpense();
+    var wdd = computeWeightedMaxDD();
+    var yr1 = currentInvestment * (1 + wr);
+    var kpis = [
+      { label: "Wtd. Return",  value: fmtPct(wr),  cls: "positive" },
+      { label: "Wtd. Expense", value: fmtPct(we),  cls: "" },
+      { label: "Wtd. Max DD",  value: fmtPct(wdd), cls: "negative" },
+      { label: "Year 1 Value", value: "\u0E3F" + fmt(yr1, 0), cls: "positive" }
+    ];
+    el.innerHTML = kpis.map(function (k) {
+      return '<div class="weights-kpi-chip">' +
+        '<div class="weights-kpi-chip-label">' + k.label + '</div>' +
+        '<div class="weights-kpi-chip-value ' + k.cls + '">' + k.value + '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  /* --- Sleeve sliders --- */
+  function renderSleeveSliders() {
+    var container = document.getElementById("sleeve-sliders");
+    container.innerHTML = SLEEVE_ORDER.map(function (sleeve) {
+      var pct = sleeveWeights[sleeve].toFixed(1);
+      var locked = sleeveLocked[sleeve];
+      var key = sleeve.replace(/\s/g, "-");
+      return '<div class="w-slider-row" data-sleeve="' + sleeve + '">' +
+        '<button class="w-lock-btn' + (locked ? ' locked' : '') + '" data-sleeve-lock="' + sleeve + '" title="' + (locked ? 'Unlock' : 'Lock') + ' ' + sleeve + '">' + ICON_LOCK + ICON_UNLOCK + '</button>' +
+        '<div class="w-slider-label"><span class="w-dot" style="background:' + SLEEVE_COLORS[sleeve] + '"></span>' + sleeve + '</div>' +
+        '<input type="range" class="w-range" min="0" max="80" step="0.5" value="' + pct + '"' + (locked ? ' disabled' : '') + ' id="sleeve-range-' + key + '">' +
+        '<div class="w-slider-value" id="sleeve-val-' + key + '">' + pct + '%</div>' +
+        '</div>';
+    }).join('');
+
+    /* Bind sleeve slider events */
+    container.querySelectorAll('input.w-range').forEach(function (slider) {
+      slider.addEventListener('input', function () {
+        var row = slider.closest('.w-slider-row');
+        var sleeve = row.getAttribute('data-sleeve');
+        onSleeveSliderChange(sleeve, parseFloat(slider.value));
+      });
+    });
+
+    /* Bind sleeve lock buttons */
+    container.querySelectorAll('.w-lock-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var sleeve = btn.getAttribute('data-sleeve-lock');
+        sleeveLocked[sleeve] = !sleeveLocked[sleeve];
+        btn.classList.toggle('locked');
+        var key = sleeve.replace(/\s/g, '-');
+        var slider = document.getElementById('sleeve-range-' + key);
+        if (slider) { slider.disabled = sleeveLocked[sleeve]; }
+        btn.title = (sleeveLocked[sleeve] ? 'Unlock' : 'Lock') + ' ' + sleeve;
+      });
+    });
+  }
+
+  function onSleeveSliderChange(changedSleeve, newVal) {
+    var oldVal = sleeveWeights[changedSleeve];
+    var delta  = newVal - oldVal;
+    if (Math.abs(delta) < 0.01) { return; }
+
+    /* Compute total of locked sleeves (excluding changed) */
+    var lockedTotal = 0;
+    var unlocked = [];
+    SLEEVE_ORDER.forEach(function (s) {
+      if (s === changedSleeve) { return; }
+      if (sleeveLocked[s]) {
+        lockedTotal += sleeveWeights[s];
+      } else {
+        unlocked.push(s);
+      }
+    });
+
+    if (unlocked.length === 0) {
+      /* No unlocked sleeves to absorb — cap the change */
+      newVal = 100 - lockedTotal;
+      delta = newVal - oldVal;
+    }
+
+    /* Set the changed sleeve */
+    sleeveWeights[changedSleeve] = newVal;
+
+    /* Distribute -delta among unlocked sleeves proportionally */
+    var unlockedTotal = 0;
+    unlocked.forEach(function (s) { unlockedTotal += sleeveWeights[s]; });
+
+    var target = unlockedTotal - delta;
+    if (target < 0) { target = 0; }
+
+    if (unlockedTotal > 0.01) {
+      unlocked.forEach(function (s) {
+        var share = sleeveWeights[s] / unlockedTotal;
+        sleeveWeights[s] = Math.max(0, +(share * target).toFixed(2));
+      });
+    } else {
+      /* Equal split fallback */
+      var each = target / unlocked.length;
+      unlocked.forEach(function (s) {
+        sleeveWeights[s] = Math.max(0, +each.toFixed(2));
+      });
+    }
+
+    /* Snap total to 100 by nudging largest unlocked */
+    var total = 0;
+    SLEEVE_ORDER.forEach(function (s) { total += sleeveWeights[s]; });
+    var diff = +(100 - total).toFixed(2);
+    if (Math.abs(diff) > 0.01 && unlocked.length > 0) {
+      var largest = unlocked[0];
+      unlocked.forEach(function (s) {
+        if (sleeveWeights[s] > sleeveWeights[largest]) { largest = s; }
+      });
+      sleeveWeights[largest] = Math.max(0, +(sleeveWeights[largest] + diff).toFixed(2));
+    }
+
+    syncHoldingsFromState();
+    updateSleeveUI();
+    updateAssetSlidersUI();
+    renderWeightsTotalBar();
+    renderWeightsKPIs();
+    refreshAllTabs();
+  }
+
+  function updateSleeveUI() {
+    SLEEVE_ORDER.forEach(function (sleeve) {
+      var key = sleeve.replace(/\s/g, '-');
+      var slider = document.getElementById('sleeve-range-' + key);
+      var valEl  = document.getElementById('sleeve-val-' + key);
+      if (slider && !sleeveLocked[sleeve]) { slider.value = sleeveWeights[sleeve].toFixed(1); }
+      if (valEl)  { valEl.textContent = sleeveWeights[sleeve].toFixed(1) + '%'; }
+    });
+  }
+
+  /* --- Asset sliders --- */
+  function renderAssetSliders() {
+    var container = document.getElementById('asset-sliders-container');
+    var html = '';
+
+    SLEEVE_ORDER.forEach(function (sleeve) {
+      var items = [];
+      HOLDINGS.forEach(function (h, idx) {
+        if (h.sleeve === sleeve) { items.push({ h: h, idx: idx }); }
+      });
+      if (items.length === 0) { return; }
+
+      var key = sleeve.replace(/\s/g, '-');
+      html += '<div class="asset-sleeve-card" data-sleeve="' + sleeve + '">';
+      html += '<div class="asset-sleeve-card-header">';
+      html += '<div class="ash-name"><span class="w-dot" style="background:' + SLEEVE_COLORS[sleeve] + '"></span>' + sleeve + '</div>';
+      html += '<div class="ash-budget" id="ash-budget-' + key + '">' + sleeveWeights[sleeve].toFixed(1) + '% of portfolio</div>';
+      html += '</div>';
+      html += '<div class="asset-sleeve-card-body">';
+
+      items.forEach(function (item) {
+        var share = assetShares[item.idx].toFixed(1);
+        var absPct = (item.h.target * 100).toFixed(1);
+        var locked = assetLocked[item.idx];
+        html += '<div class="a-slider-row" data-idx="' + item.idx + '">';
+        html += '<button class="w-lock-btn' + (locked ? ' locked' : '') + '" data-asset-lock="' + item.idx + '" title="' + (locked ? 'Unlock' : 'Lock') + ' ' + item.h.ticker + '">' + ICON_LOCK + ICON_UNLOCK + '</button>';
+        html += '<div class="w-slider-label">' + item.h.ticker + '<small>' + absPct + '% abs</small></div>';
+        html += '<input type="range" class="w-range" min="0" max="100" step="0.5" value="' + share + '"' + (locked ? ' disabled' : '') + ' id="asset-range-' + item.idx + '">';
+        html += '<div class="w-slider-value" id="asset-val-' + item.idx + '">' + share + '%</div>';
+        html += '</div>';
+      });
+
+      html += '</div></div>';
+    });
+
+    container.innerHTML = html;
+
+    /* Bind asset slider events */
+    container.querySelectorAll('input.w-range').forEach(function (slider) {
+      slider.addEventListener('input', function () {
+        var row = slider.closest('.a-slider-row');
+        var idx = parseInt(row.getAttribute('data-idx'), 10);
+        onAssetSliderChange(idx, parseFloat(slider.value));
+      });
+    });
+
+    /* Bind asset lock buttons */
+    container.querySelectorAll('.w-lock-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var idx = parseInt(btn.getAttribute('data-asset-lock'), 10);
+        assetLocked[idx] = !assetLocked[idx];
+        btn.classList.toggle('locked');
+        var slider = document.getElementById('asset-range-' + idx);
+        if (slider) { slider.disabled = assetLocked[idx]; }
+        btn.title = (assetLocked[idx] ? 'Unlock' : 'Lock') + ' ' + HOLDINGS[idx].ticker;
+      });
+    });
+  }
+
+  function onAssetSliderChange(changedIdx, newShare) {
+    var sleeve = HOLDINGS[changedIdx].sleeve;
+    var oldShare = assetShares[changedIdx];
+    var delta = newShare - oldShare;
+    if (Math.abs(delta) < 0.01) { return; }
+
+    /* Gather siblings in same sleeve */
+    var lockedTotal = 0;
+    var unlocked = [];
+    HOLDINGS.forEach(function (h, idx) {
+      if (h.sleeve !== sleeve || idx === changedIdx) { return; }
+      if (assetLocked[idx]) {
+        lockedTotal += assetShares[idx];
+      } else {
+        unlocked.push(idx);
+      }
+    });
+
+    /* Cap if no unlocked siblings */
+    if (unlocked.length === 0) {
+      newShare = 100 - lockedTotal;
+      delta = newShare - oldShare;
+    }
+
+    assetShares[changedIdx] = newShare;
+
+    /* Distribute -delta among unlocked siblings proportionally */
+    var unlockedTotal = 0;
+    unlocked.forEach(function (idx) { unlockedTotal += assetShares[idx]; });
+
+    var target = unlockedTotal - delta;
+    if (target < 0) { target = 0; }
+
+    if (unlockedTotal > 0.01) {
+      unlocked.forEach(function (idx) {
+        var share = assetShares[idx] / unlockedTotal;
+        assetShares[idx] = Math.max(0, +(share * target).toFixed(2));
+      });
+    } else {
+      var each = target / unlocked.length;
+      unlocked.forEach(function (idx) {
+        assetShares[idx] = Math.max(0, +each.toFixed(2));
+      });
+    }
+
+    /* Snap to 100 within sleeve */
+    var sleeveSum = 0;
+    HOLDINGS.forEach(function (h, idx) {
+      if (h.sleeve === sleeve) { sleeveSum += assetShares[idx]; }
+    });
+    var diff = +(100 - sleeveSum).toFixed(2);
+    if (Math.abs(diff) > 0.01 && unlocked.length > 0) {
+      var largest = unlocked[0];
+      unlocked.forEach(function (idx) {
+        if (assetShares[idx] > assetShares[largest]) { largest = idx; }
+      });
+      assetShares[largest] = Math.max(0, +(assetShares[largest] + diff).toFixed(2));
+    }
+
+    syncHoldingsFromState();
+    updateAssetSlidersUI();
+    renderWeightsKPIs();
+    refreshAllTabs();
+  }
+
+  function updateAssetSlidersUI() {
+    HOLDINGS.forEach(function (h, idx) {
+      var slider = document.getElementById('asset-range-' + idx);
+      var valEl  = document.getElementById('asset-val-' + idx);
+      var share  = assetShares[idx];
+      if (slider && !assetLocked[idx]) { slider.value = share.toFixed(1); }
+      if (valEl)  { valEl.textContent = share.toFixed(1) + '%'; }
+
+      /* Update the absolute % label */
+      var row = slider ? slider.closest('.a-slider-row') : null;
+      if (row) {
+        var small = row.querySelector('.w-slider-label small');
+        if (small) { small.textContent = (h.target * 100).toFixed(1) + '% abs'; }
+      }
+    });
+
+    /* Update sleeve budget labels */
+    SLEEVE_ORDER.forEach(function (sleeve) {
+      var key = sleeve.replace(/\s/g, '-');
+      var budgetEl = document.getElementById('ash-budget-' + key);
+      if (budgetEl) { budgetEl.textContent = sleeveWeights[sleeve].toFixed(1) + '% of portfolio'; }
+    });
+  }
+
+  /* --- Total bar --- */
+  function renderWeightsTotalBar() {
+    var el = document.getElementById('weights-total-row');
+    if (!el) { return; }
+    var total = 0;
+    SLEEVE_ORDER.forEach(function (s) { total += sleeveWeights[s]; });
+
+    var cls = '';
+    if (total > 100.1) { cls = 'over'; }
+    else if (total < 99.9) { cls = 'under'; }
+
+    el.innerHTML = '<span class="wt-label">Total</span>' +
+      '<div class="wt-track"><div class="wt-fill ' + cls + '" style="width:' + Math.min(total, 100) + '%"></div></div>' +
+      '<span class="wt-pct ' + cls + '">' + total.toFixed(1) + '%</span>';
+  }
+
+  /* --- Reset button --- */
+  function bindResetButton() {
+    var btn = document.getElementById('weights-reset-btn');
+    if (!btn) { return; }
+    btn.addEventListener('click', function () {
+      /* Restore default targets */
+      HOLDINGS.forEach(function (h, idx) {
+        h.target = DEFAULT_WEIGHTS[idx];
+        h.amount = Math.round(h.target * 1000000);
+      });
+      /* Re-derive state */
+      SLEEVE_ORDER.forEach(function (s) { sleeveLocked[s] = false; });
+      HOLDINGS.forEach(function (_, idx) { assetLocked[idx] = false; });
+      initWeightsState();
+      /* Re-render everything */
+      renderSleeveSliders();
+      renderWeightsTotalBar();
+      renderAssetSliders();
+      renderWeightsKPIs();
+      refreshAllTabs();
+    });
+  }
+
+  /* --- Refresh all other tabs --- */
+  function refreshAllTabs() {
+    renderKPIs();
+    renderSleeveDonut();
+    renderHoldingsBar();
+    renderHoldingsTable();
+
+    tabInitialized.geography = false;
+    tabInitialized.sectors = false;
+    tabInitialized.diversification = false;
+    tabInitialized.proscons = false;
+    tabInitialized.compounding = false;
+
+    var activeTab = document.querySelector('.tab-content.active');
+    if (activeTab) {
+      var activeId = activeTab.id.replace('tab-', '');
+      if (activeId !== 'overview' && activeId !== 'weights') {
+        initTab(activeId);
+      }
+    }
+  }
+
+  /* ------------------------------------------
+     TAB 7: COMPOUNDING
   ------------------------------------------ */
   function renderCompounding() {
     var wr = computeWeightedReturn();
