@@ -146,14 +146,14 @@
           <table class="data-table" id="holdings-table">
             <thead>
               <tr>
-                <th data-sort="ticker">Ticker</th>
+                <th data-sort="ticker"><span class="jargon jargon--left">Ticker<span class="jargon-tip">A short code used to identify a fund on stock exchanges, like a nickname.</span></span></th>
                 <th data-sort="name">Name</th>
-                <th data-sort="sleeve">Sleeve</th>
+                <th data-sort="sleeve"><span class="jargon jargon--left">Sleeve<span class="jargon-tip">A category grouping funds by their role: Fixed Income (stability), Equities (growth), Alternatives (inflation protection), or Hedges (crash protection).</span></span></th>
                 <th data-sort="target" class="num">Target %</th>
                 <th data-sort="amount" class="num">Amount (THB)</th>
-                <th data-sort="returns" class="num">Exp. Return</th>
-                <th data-sort="expense" class="num">Expense</th>
-                <th data-sort="maxdd" class="num">Max DD</th>
+                <th data-sort="returns" class="num"><span class="jargon">Exp. Return<span class="jargon-tip">Expected Return — the estimated annual percentage gain for this fund, based on historical performance.</span></span></th>
+                <th data-sort="expense" class="num"><span class="jargon">Expense<span class="jargon-tip">Expense Ratio — the annual fee charged by the fund manager, expressed as a percentage. Lower is better. It's deducted automatically from the fund's value.</span></span></th>
+                <th data-sort="maxdd" class="num"><span class="jargon">Max DD<span class="jargon-tip">Maximum Drawdown — the largest drop from a peak to a trough in the fund's history. Shows the worst-case temporary loss you might experience.</span></span></th>
               </tr>
             </thead>
             <tbody id="holdings-tbody">
@@ -168,6 +168,9 @@
       <div class="page-header">
         <h1>Geographic Concentration</h1>
         <p class="page-subtitle">Weighted exposure across all holdings by country and region</p>
+      </div>
+      <div class="intro-panel">
+        <p class="intro-panel-text">This page shows <strong>where in the world</strong> your money is actually invested. Even though you only buy 10 funds, those funds hold shares in companies and bonds from dozens of countries. If too much of your money is in one country, a local crisis there could hurt your whole portfolio. Spreading across regions reduces that risk. The percentages here are <strong>weighted</strong> &mdash; meaning a fund with 20% of your portfolio counts twice as much as one with 10%.</p>
       </div>
       <div class="content-grid content-grid--2col">
         <div class="card">
@@ -207,6 +210,9 @@
         <h1>Sector Allocation</h1>
         <p class="page-subtitle">Weighted sector exposure across equity and alternative holdings</p>
       </div>
+      <div class="intro-panel">
+        <p class="intro-panel-text">Sectors are <strong>industries</strong> &mdash; like Technology, Financials, Healthcare, or Energy. This page shows how much of your portfolio is in each industry. If one sector dominates (say, 40% in Tech), your returns depend heavily on that single industry. A healthy portfolio spreads across many sectors so that a downturn in one area doesn't drag down the whole thing. <strong>Concentration alerts</strong> flag any sector that takes up an unusually large share.</p>
+      </div>
       <div class="content-grid content-grid--2col">
         <div class="card">
           <h2 class="card-title">Sector Allocation (Weighted)</h2>
@@ -231,6 +237,9 @@
       <div class="page-header">
         <h1>Diversification Analysis</h1>
         <p class="page-subtitle">Correlation, risk metrics, and dollar weakening impact</p>
+      </div>
+      <div class="intro-panel">
+        <p class="intro-panel-text">Diversification means <strong>not putting all your eggs in one basket</strong>. This page measures how well your holdings complement each other. The <strong>correlation matrix</strong> shows whether two funds tend to move in the same direction (bad for diversification) or in opposite directions (good). A score of +1 means they move identically; &minus;1 means they move in opposite directions; 0 means they're unrelated. The <strong>diversification score</strong> rates how spread out your portfolio is across holdings, countries, sectors, and sleeves. The <strong>dollar impact table</strong> shows how each holding is affected if the US dollar weakens over time &mdash; an important factor for Thai investors.</p>
       </div>
       <div class="content-grid content-grid--2col">
         <div class="card">
@@ -275,6 +284,9 @@
         <h1>Learn About Your Assets</h1>
         <p class="page-subtitle">Plain-language explanations of every holding in the portfolio</p>
       </div>
+      <div class="intro-panel">
+        <p class="intro-panel-text">Each card below explains <strong>what a holding actually does</strong> in everyday language &mdash; no finance degree required. You'll see what kind of investment it is, where it fits in the portfolio, and a "Why it matters" note connecting it to a real-world concept. The three numbers at the bottom are: <strong>Target</strong> (how much of your portfolio goes here), <strong>Expected Return</strong> (the estimated annual growth), and <strong>Cost</strong> (the annual fee you pay to own it).</p>
+      </div>
       <div id="learn-grid" class="learn-grid">
         <!-- Learn cards injected by JS -->
       </div>
@@ -286,6 +298,9 @@
         <h1>Pros &amp; Cons Analysis</h1>
         <p class="page-subtitle">Detailed assessment of each holding's strengths and weaknesses</p>
       </div>
+      <div class="intro-panel">
+        <p class="intro-panel-text">Every investment has trade-offs. This page lays out the <strong>strengths and weaknesses</strong> of each fund so you can make informed decisions. Click any card to expand it. The <strong>Dollar Impact</strong> rating shows how the fund would be affected if the US dollar weakens &mdash; "Positive" means you'd benefit, "Negative" means it could hurt your THB returns, and "Neutral" means minimal effect. No investment is perfect, and understanding the downsides is just as important as knowing the upsides.</p>
+      </div>
       <div id="proscons-grid" class="proscons-grid">
       </div>
     </section>
@@ -295,6 +310,9 @@
       <div class="page-header">
         <h1>Weight Allocation</h1>
         <p class="page-subtitle">Adjust sleeve and asset weights with auto-rebalancing. Lock any item to hold it constant.</p>
+      </div>
+      <div class="intro-panel">
+        <p class="intro-panel-text">This is your <strong>what-if playground</strong>. Use the sliders to experiment with how much of your portfolio goes into each sleeve and each fund. The <strong>lock button</strong> lets you freeze any item so it stays constant while the others auto-adjust to keep the total at 100%. For example, lock Fixed Income at 30%, then slide Equities up &mdash; the other unlocked sleeves will shrink proportionally. The same locking works inside each sleeve for individual funds. Changes here update all other tabs in real time.</p>
       </div>
 
       <!-- Live KPI strip -->
@@ -328,6 +346,9 @@
       <div class="page-header">
         <h1>Compounding Projector</h1>
         <p class="page-subtitle">20-year growth projection with scenario analysis</p>
+      </div>
+      <div class="intro-panel">
+        <p class="intro-panel-text"><strong>Compounding</strong> is when your returns earn their own returns &mdash; it's the most powerful force in long-term investing. This page shows three scenarios for how your money could grow over 20 years. <strong>Base Case</strong> uses the portfolio's current expected return. <strong>Dollar Erosion Boost</strong> assumes the US dollar weakens gradually, adding extra gains for THB investors. <strong>Conservative / Stress</strong> models a worst-case with lower returns. Enter any investment amount to see the projected outcomes. Remember: these are estimates, not guarantees.</p>
       </div>
       <div class="card compounding-input-card">
         <div class="compounding-controls">
@@ -386,11 +407,11 @@
         <h2 class="card-title">Macro Projection Notes</h2>
         <div class="macro-note">
           <h3>Slow Dollar Erosion Scenario</h3>
-          <p>With ~60% of holdings in non-USD assets, a gradual USD decline of 2–3% annually could add 1–2% to portfolio returns via currency translation. Commodities (HGER) and EM (EMXC) benefit most. DBMF's trend-following adapts dynamically.</p>
+          <p>With ~60% of holdings in non-USD assets, a gradual USD decline of 2&ndash;3% annually could add 1&ndash;2% to portfolio returns via <span class="jargon">currency translation<span class="jargon-tip">When foreign assets are converted back to your home currency (THB), a weaker dollar makes those assets worth more in THB.</span></span>. Commodities (HGER) and <span class="jargon">EM<span class="jargon-tip">Emerging Markets &mdash; developing economies like India, Brazil, and Taiwan that tend to grow faster than developed nations.</span></span> (EMXC) benefit most. DBMF's <span class="jargon">trend-following<span class="jargon-tip">A strategy that bets on continuing market trends &mdash; buying assets that are rising and selling those that are falling.</span></span> adapts dynamically.</p>
         </div>
         <div class="macro-note">
           <h3>Current Political Climate</h3>
-          <p>Rising geopolitical fragmentation, de-dollarization trends, and fiscal expansion in G7 support the inflation-hedge positioning (HGER, IGF). Thailand's fixed income provides stability. Japan (DXJ) benefits from yen weakness cycle. EM ex-China (EMXC) captures supply chain diversification flows.</p>
+          <p>Rising <span class="jargon">geopolitical fragmentation<span class="jargon-tip">The world splitting into competing blocs (e.g. US vs China), which disrupts global trade and supply chains.</span></span>, <span class="jargon">de-dollarization<span class="jargon-tip">The global trend of countries reducing their dependence on the US dollar for trade and reserves.</span></span> trends, and <span class="jargon">fiscal expansion<span class="jargon-tip">When governments increase spending or cut taxes to stimulate the economy. This can lead to higher inflation and more government debt.</span></span> in <span class="jargon">G7<span class="jargon-tip">The Group of Seven &mdash; the world's seven largest advanced economies: US, UK, Canada, France, Germany, Italy, and Japan.</span></span> support the inflation-hedge positioning (HGER, IGF). Thailand's fixed income provides stability. Japan (DXJ) benefits from yen weakness cycle. <span class="jargon">EM ex-China<span class="jargon-tip">Emerging Markets excluding China &mdash; countries like India, Taiwan, Brazil, and South Korea, without exposure to Chinese regulatory and political risks.</span></span> (EMXC) captures supply chain diversification flows.</p>
         </div>
       </div>
     </section>
