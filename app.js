@@ -180,6 +180,43 @@
     return n.toFixed(2) + "%";
   }
 
+  /* Jargon tooltip helper — wraps a term in a hover-explainer span */
+  function jargon(term, tip, leftAlign) {
+    var cls = leftAlign ? "jargon jargon--left" : "jargon";
+    return '<span class="' + cls + '">' + term + '<span class="jargon-tip">' + tip + '</span></span>';
+  }
+
+  /* Auto-replace known jargon in free-text strings (pros/cons/macro) */
+  var GLOSSARY = [
+    ["Contango/roll yield losses", "Contango/roll yield losses", "Contango happens when future prices are higher than today\u2019s price. Funds that hold futures contracts lose a small amount each time they \u201Croll\u201D to the next contract."],
+    ["CTA replication", "CTA replication", "CTA stands for Commodity Trading Advisor \u2014 a type of hedge fund. This fund replicates their strategies at a fraction of the cost."],
+    ["2/20", "2/20", "The traditional hedge fund fee: 2% annual management fee plus 20% of profits. Very expensive compared to ETFs."],
+    ["Crisis alpha", "Crisis alpha", "The ability to generate positive returns during market crises when most investments are losing money."],
+    ["max drawdown", "max drawdown", "The largest peak-to-trough drop in value. Shows the worst temporary loss you might face."],
+    ["risk-adjusted returns", "risk-adjusted returns", "Returns measured relative to how much risk was taken. Higher risk-adjusted returns means better reward per unit of risk."],
+    ["annualized", "annualized", "Converted to an annual rate. If a fund returned 50% over 3 years, the annualized return is about 14.5% per year."],
+    ["FX risk", "FX risk", "Foreign exchange risk \u2014 the chance that currency movements between THB and the fund\u2019s currency will affect your returns."],
+    ["FX hedging", "FX hedging", "A strategy that locks in exchange rates to reduce the impact of currency fluctuations on your returns."],
+    ["investment grade", "investment grade", "Bonds rated BBB or higher by rating agencies. Below investment grade (\u201Cjunk bonds\u201D) carry higher risk of default but pay more interest."],
+    ["AUM", "AUM", "Assets Under Management \u2014 the total amount of money investors have put into the fund. Larger AUM usually means more liquidity and lower costs."],
+    ["Currency hedge", "Currency hedge", "Insurance against exchange rate changes. It locks in the conversion rate so currency swings don\u2019t affect your returns."],
+    ["de-dollarization", "de-dollarization", "The global trend of countries reducing their dependence on the US dollar for trade and reserves."],
+    ["fiscal expansion", "fiscal expansion", "When governments increase spending or cut taxes to stimulate the economy. This can lead to higher inflation and more government debt."],
+    ["geopolitical fragmentation", "geopolitical fragmentation", "The world splitting into competing blocs (e.g. US vs China), which disrupts global trade and supply chains."]
+  ];
+
+  function glossaryReplace(text) {
+    GLOSSARY.forEach(function (entry) {
+      var searchStr = entry[0];
+      var displayStr = entry[1];
+      var tipStr = entry[2];
+      if (text.indexOf(searchStr) !== -1) {
+        text = text.replace(searchStr, jargon(displayStr, tipStr));
+      }
+    });
+    return text;
+  }
+
   function getSleeveData() {
     var data = {};
     HOLDINGS.forEach(function (h) {
@@ -343,11 +380,11 @@
     var scaledInvestment = currentInvestment;
 
     var kpis = [
-      { label: "Total Investment", value: "฿" + fmt(scaledInvestment, 0), sub: "THB", cls: "" },
-      { label: "Weighted Return", value: fmtPct(weightedReturn), sub: "Annual expected", cls: "positive" },
-      { label: "Weighted Expense", value: fmtPct(weightedExpense), sub: "Annual cost", cls: "" },
-      { label: "Wtd. Max Drawdown", value: fmtPct(weightedDD), sub: "Historical worst", cls: "negative" },
-      { label: "Blended Growth", value: "฿" + fmt(scaledInvestment * (1 + weightedReturn), 0), sub: "Year 1 expected", cls: "positive" }
+      { label: "Total Investment", value: "\u0E3F" + fmt(scaledInvestment, 0), sub: "THB", cls: "" },
+      { label: jargon("Weighted Return", "The average expected annual gain across all holdings, weighted by how much you invest in each one."), value: fmtPct(weightedReturn), sub: "Annual expected", cls: "positive" },
+      { label: jargon("Weighted Expense", "The average annual fee you pay across all holdings, weighted by each fund\u2019s share. This is deducted from your returns automatically."), value: fmtPct(weightedExpense), sub: "Annual cost", cls: "" },
+      { label: jargon("Wtd. Max Drawdown", "The worst peak-to-trough drop the portfolio could experience, based on each fund\u2019s historical worst. Think of it as the biggest possible temporary loss."), value: fmtPct(weightedDD), sub: "Historical worst", cls: "negative" },
+      { label: jargon("Blended Growth", "Your estimated portfolio value after one year of growth, before fees."), value: "\u0E3F" + fmt(scaledInvestment * (1 + weightedReturn), 0), sub: "Year 1 expected", cls: "positive" }
     ];
 
     grid.innerHTML = kpis.map(function (k) {
@@ -843,12 +880,12 @@
     var netReturn = wr - we;
 
     container.innerHTML = [
-      { label: "Net Expected Return", value: fmtPct(netReturn) },
-      { label: "Weighted Expense", value: fmtPct(we) },
-      { label: "Weighted Max DD", value: fmtPct(wdd) },
+      { label: jargon("Net Expected Return", "Your weighted return minus weighted expense. This is what you actually keep after fees.", true), value: fmtPct(netReturn) },
+      { label: jargon("Weighted Expense", "The average annual fee across all your holdings, weighted by allocation size.", true), value: fmtPct(we) },
+      { label: jargon("Weighted Max DD", "Maximum Drawdown \u2014 the biggest potential temporary loss, based on the historical worst of each fund.", true), value: fmtPct(wdd) },
       { label: "Holdings Count", value: "10" },
-      { label: "DBMF Correlation", value: "-0.09" },
-      { label: "USD Exposure", value: "~40%" }
+      { label: jargon("DBMF Correlation", "How closely DBMF (the hedge fund) moves with stocks. \u22120.09 means almost no connection \u2014 when stocks fall, DBMF doesn\u2019t necessarily follow.", true), value: "-0.09" },
+      { label: jargon("USD Exposure", "The portion of your portfolio invested in US dollar-denominated assets. If the dollar weakens, this part may lose value in THB terms.", true), value: "~40%" }
     ].map(function (m) {
       return "<div class=\"metric-item\"><div class=\"metric-label\">" + m.label + "</div><div class=\"metric-value\">" + m.value + "</div></div>";
     }).join("");
@@ -972,9 +1009,9 @@
         "</div>" +
         "<div class=\"proscons-body\"><div class=\"proscons-content\">" +
         "<div class=\"proscons-section\"><div class=\"proscons-section-title pros\">Strengths</div>" +
-        "<ul class=\"proscons-list pros-list\">" + h.pros.map(function (p) { return "<li>" + p + "</li>"; }).join("") + "</ul></div>" +
+        "<ul class=\"proscons-list pros-list\">" + h.pros.map(function (p) { return "<li>" + glossaryReplace(p) + "</li>"; }).join("") + "</ul></div>" +
         "<div class=\"proscons-section\"><div class=\"proscons-section-title cons\">Weaknesses</div>" +
-        "<ul class=\"proscons-list cons-list\">" + h.cons.map(function (c) { return "<li>" + c + "</li>"; }).join("") + "</ul></div>" +
+        "<ul class=\"proscons-list cons-list\">" + h.cons.map(function (c) { return "<li>" + glossaryReplace(c) + "</li>"; }).join("") + "</ul></div>" +
         "<div class=\"proscons-section\"><div class=\"proscons-section-title impact\">Dollar Weakening Impact</div>" +
         "<p class=\"impact-text\"><span class=\"tag tag--" + impactClass + "\">" + h.dollarImpact + "</span> — " + h.dollarExplain + "</p></div>" +
         "</div></div></div>";
@@ -1057,9 +1094,9 @@
     var wdd = computeWeightedMaxDD();
     var yr1 = currentInvestment * (1 + wr);
     var kpis = [
-      { label: "Wtd. Return",  value: fmtPct(wr),  cls: "positive" },
-      { label: "Wtd. Expense", value: fmtPct(we),  cls: "" },
-      { label: "Wtd. Max DD",  value: fmtPct(wdd), cls: "negative" },
+      { label: jargon("Wtd. Return", "Weighted Return \u2014 the average expected annual gain, weighted by each fund\u2019s allocation."), value: fmtPct(wr),  cls: "positive" },
+      { label: jargon("Wtd. Expense", "Weighted Expense \u2014 the average annual fee across all holdings."), value: fmtPct(we),  cls: "" },
+      { label: jargon("Wtd. Max DD", "Weighted Max Drawdown \u2014 the biggest potential temporary loss based on historical data."), value: fmtPct(wdd), cls: "negative" },
       { label: "Year 1 Value", value: "\u0E3F" + fmt(yr1, 0), cls: "positive" }
     ];
     el.innerHTML = kpis.map(function (k) {
