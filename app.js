@@ -1048,6 +1048,250 @@
   var ICON_LOCK   = '<svg class="icon-lock" width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
   var ICON_UNLOCK = '<svg class="icon-unlock" width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
 
+  /* ------------------------------------------
+     PORTFOLIO ADVISOR — Rule-Based Engine
+  ------------------------------------------ */
+  var ADVISOR_RULES = [
+    {
+      id: "less-risk",
+      keywords: ["less risk", "lower risk", "reduce risk", "safer", "safe", "conservative", "protect", "defensive", "stability", "stable", "volatile", "volatility", "scared", "worry", "worried", "crash", "drawdown", "loss"],
+      goal: "Reduce Portfolio Risk",
+      explain: "To lower risk, we shift weight from volatile equity and alternative funds toward stable fixed income. Fixed income has much lower drawdowns and provides steady, predictable returns.",
+      sleeves: { "Fixed Income": 45, "Equities": 40, "Alternatives": 8, "Hedges": 7 },
+      note: "This brings the weighted max drawdown from about &minus;28% closer to &minus;20%, but also lowers expected return from ~7.6% to ~6.5%. A safer ride, but slower compounding."
+    },
+    {
+      id: "more-income",
+      keywords: ["more income", "dividend", "dividends", "cash flow", "cashflow", "yield", "passive income", "regular income", "payout", "payouts", "monthly income", "interest"],
+      goal: "Maximize Income & Dividends",
+      explain: "For more income, we tilt toward dividend-paying equities (TDIV yields ~3%), fixed income bonds, and infrastructure (IGF yields ~3%). These generate regular cash payouts.",
+      sleeves: { "Fixed Income": 35, "Equities": 45, "Alternatives": 12, "Hedges": 8 },
+      assetHints: [
+        { ticker: "TDIV", target: 0.22, reason: "Highest dividend yield (~3%) among equities" },
+        { ticker: "IGF", target: 0.08, reason: "Infrastructure pays ~3% dividend" },
+        { ticker: "KFAFIX-A", target: 0.22, reason: "Steady Thai bond interest" }
+      ],
+      note: "This tilts toward income-producing assets. Expected dividend + interest income rises from ~1.5% to ~2.3% annually. Trade-off: slightly more concentrated in financials-heavy TDIV."
+    },
+    {
+      id: "more-growth",
+      keywords: ["more growth", "higher return", "higher returns", "aggressive", "maximize", "grow faster", "growth", "returns", "more return", "better return", "upside", "performance", "outperform", "wealth", "rich", "compound faster"],
+      goal: "Maximize Growth",
+      explain: "For higher growth, we shift heavily into equities — especially high-return funds like S&P 500 (CSPX ~10%), Japan (DXJ ~10%), and EM ex-China (EMXC ~10%). We reduce the stable but low-return fixed income.",
+      sleeves: { "Fixed Income": 15, "Equities": 68, "Alternatives": 10, "Hedges": 7 },
+      note: "This pushes the weighted expected return from ~7.6% to ~9.3%, which compounds to nearly 5x in 20 years vs 4.3x with the default. Trade-off: the max drawdown deepens to about &minus;35%, so prepare for bigger temporary losses."
+    },
+    {
+      id: "lower-fees",
+      keywords: ["lower fees", "lower cost", "cheaper", "reduce expense", "reduce fees", "fee", "fees", "expense", "expenses", "cost", "costs", "expensive", "save money", "minimize cost", "minimize fees"],
+      goal: "Minimize Fees & Expenses",
+      explain: "To cut costs, we shift toward ultra-low-cost index ETFs like CSPX (0.07%) and VAPX (0.15%), and reduce expensive active funds like DBMF (0.85%), HGER (0.68%), and K-APB-A(A) (1.30%).",
+      sleeves: { "Fixed Income": 25, "Equities": 65, "Alternatives": 7, "Hedges": 3 },
+      assetHints: [
+        { ticker: "CSPX", target: 0.22, reason: "Ultra-low 0.07% expense" },
+        { ticker: "VAPX", target: 0.14, reason: "Low 0.15% expense" },
+        { ticker: "KFAFIX-A", target: 0.20, reason: "Low 0.50% expense for active" },
+        { ticker: "K-APB-A(A)", target: 0.05, reason: "Reduce 1.30% active fund" },
+        { ticker: "DBMF", target: 0.03, reason: "Reduce 0.85% hedge fund" }
+      ],
+      note: "This cuts the weighted expense from ~0.46% to ~0.22% — saving roughly ฿2,400 per year on a ฿1M portfolio. Trade-off: less hedging protection and less diversification into alternatives."
+    }
+  ];
+
+  function matchAdvisorIntent(query) {
+    var q = query.toLowerCase().trim();
+    var bestMatch = null;
+    var bestScore = 0;
+
+    ADVISOR_RULES.forEach(function (rule) {
+      var score = 0;
+      rule.keywords.forEach(function (kw) {
+        if (q.indexOf(kw) !== -1) {
+          /* Longer keyword matches are more specific */
+          score += kw.split(" ").length;
+        }
+      });
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = rule;
+      }
+    });
+
+    return bestMatch;
+  }
+
+  function computeAdvisorChanges(rule) {
+    var changes = [];
+    SLEEVE_ORDER.forEach(function (sleeve) {
+      var current = sleeveWeights[sleeve];
+      var proposed = rule.sleeves[sleeve];
+      if (Math.abs(current - proposed) >= 0.5) {
+        changes.push({
+          label: sleeve,
+          from: current,
+          to: proposed,
+          delta: proposed - current
+        });
+      }
+    });
+    return changes;
+  }
+
+  function renderAdvisorResponse(rule) {
+    var responseEl = document.getElementById("advisor-response");
+    var changes = computeAdvisorChanges(rule);
+
+    var changesHtml = changes.map(function (c) {
+      var arrow = c.delta > 0 ? "\u2191" : "\u2193";
+      var cls = c.delta > 0 ? "positive" : "negative";
+      return '<div class="advisor-change-row">' +
+        '<span class="advisor-change-label">' + c.label + '</span>' +
+        '<span class="advisor-change-from">' + c.from.toFixed(1) + '%</span>' +
+        '<span class="advisor-change-arrow">\u2192</span>' +
+        '<span class="advisor-change-to ' + cls + '">' + c.to.toFixed(1) + '% ' + arrow + '</span>' +
+        '</div>';
+    }).join('');
+
+    responseEl.innerHTML =
+      '<div class="advisor-msg">' +
+        '<div class="advisor-msg-goal">' + rule.goal + '</div>' +
+        '<p>' + rule.explain + '</p>' +
+        '<div class="advisor-changes">' + changesHtml + '</div>' +
+        '<button class="advisor-apply-btn" id="advisor-apply-btn">' +
+          '<svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M2 8.5l4 4 8-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+          'Apply These Changes' +
+        '</button>' +
+        '<div class="advisor-note">' + rule.note + '</div>' +
+      '</div>';
+
+    responseEl.classList.add("visible");
+
+    /* Bind apply button */
+    document.getElementById("advisor-apply-btn").addEventListener("click", function () {
+      applyAdvisorRule(rule);
+    });
+  }
+
+  function renderAdvisorFallback(query) {
+    var responseEl = document.getElementById("advisor-response");
+    var chipHtml = ADVISOR_RULES.map(function (r) {
+      return '<button class="advisor-chip advisor-retry-chip" data-query="' + r.keywords[0] + '">' + r.goal + '</button>';
+    }).join(' ');
+
+    responseEl.innerHTML =
+      '<div class="advisor-msg">' +
+        '<p>I\'m not sure how to help with <strong>"' + query + '"</strong>, but I can advise on these goals:</p>' +
+        '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;">' + chipHtml + '</div>' +
+      '</div>';
+    responseEl.classList.add("visible");
+
+    /* Bind retry chips */
+    responseEl.querySelectorAll(".advisor-retry-chip").forEach(function (chip) {
+      chip.addEventListener("click", function () {
+        processAdvisorQuery(chip.getAttribute("data-query"));
+      });
+    });
+  }
+
+  function applyAdvisorRule(rule) {
+    /* Apply sleeve weights */
+    SLEEVE_ORDER.forEach(function (sleeve) {
+      sleeveWeights[sleeve] = rule.sleeves[sleeve];
+      sleeveLocked[sleeve] = false;
+    });
+
+    /* Apply asset-level hints if provided */
+    if (rule.assetHints) {
+      rule.assetHints.forEach(function (hint) {
+        HOLDINGS.forEach(function (h, idx) {
+          if (h.ticker === hint.ticker) {
+            /* Compute new share within sleeve */
+            var sleeveTotal = 0;
+            HOLDINGS.forEach(function (h2) {
+              if (h2.sleeve === h.sleeve) { sleeveTotal += h2.target; }
+            });
+            var proposedSleeveWeight = rule.sleeves[h.sleeve] / 100;
+            if (proposedSleeveWeight > 0) {
+              assetShares[idx] = (hint.target / proposedSleeveWeight) * 100;
+            }
+          }
+        });
+      });
+
+      /* Re-normalize shares within each sleeve to 100% */
+      SLEEVE_ORDER.forEach(function (sleeve) {
+        var indices = [];
+        var total = 0;
+        HOLDINGS.forEach(function (h, idx) {
+          if (h.sleeve === sleeve) {
+            indices.push(idx);
+            total += assetShares[idx];
+          }
+        });
+        if (total > 0 && Math.abs(total - 100) > 0.1) {
+          indices.forEach(function (idx) {
+            assetShares[idx] = (assetShares[idx] / total) * 100;
+          });
+        }
+      });
+    }
+
+    /* Sync and re-render everything */
+    syncHoldingsFromState();
+    renderSleeveSliders();
+    renderWeightsTotalBar();
+    renderAssetSliders();
+    renderWeightsKPIs();
+    refreshAllTabs();
+
+    /* Visual feedback on the apply button */
+    var btn = document.getElementById("advisor-apply-btn");
+    if (btn) {
+      btn.textContent = "\u2713 Applied!";
+      btn.disabled = true;
+      btn.style.opacity = "0.6";
+    }
+  }
+
+  function processAdvisorQuery(query) {
+    var rule = matchAdvisorIntent(query);
+    if (rule) {
+      renderAdvisorResponse(rule);
+    } else {
+      renderAdvisorFallback(query);
+    }
+  }
+
+  function initAdvisor() {
+    var input = document.getElementById("advisor-input");
+    var sendBtn = document.getElementById("advisor-send-btn");
+    if (!input || !sendBtn) { return; }
+
+    function submit() {
+      var q = input.value.trim();
+      if (!q) { return; }
+      processAdvisorQuery(q);
+      input.value = "";
+    }
+
+    sendBtn.addEventListener("click", submit);
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submit();
+      }
+    });
+
+    /* Suggestion chips */
+    document.querySelectorAll(".advisor-chip[data-query]").forEach(function (chip) {
+      chip.addEventListener("click", function () {
+        var q = chip.getAttribute("data-query");
+        input.value = q;
+        processAdvisorQuery(q);
+      });
+    });
+  }
+
   function initWeightsState() {
     /* Compute initial sleeve weights from HOLDINGS targets */
     SLEEVE_ORDER.forEach(function (s) {
@@ -1078,6 +1322,7 @@
   /* ---------- Render ---------- */
   function renderWeightsTab() {
     initWeightsState();
+    initAdvisor();
     renderWeightsKPIs();
     renderSleeveSliders();
     renderWeightsTotalBar();
