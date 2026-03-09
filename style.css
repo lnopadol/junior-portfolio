@@ -1081,56 +1081,107 @@ body {
    PORTFOLIO ADVISOR (Weights Tab)
    ============================================ */
 .advisor-box {
-  background: var(--surface-1);
+  background: linear-gradient(135deg, var(--surface-2) 0%, var(--surface-1) 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: var(--space-5);
-  margin-bottom: var(--space-5);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  position: relative;
+  overflow: hidden;
+}
+.advisor-box::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  opacity: 0.6;
 }
 
 .advisor-header {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--accent);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
 }
-
 .advisor-icon {
   flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-dim);
+  border-radius: var(--radius-md);
+  color: var(--accent);
+}
+.advisor-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.advisor-header span {
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.advisor-description {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: var(--space-4);
 }
 
 .advisor-suggestions {
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .advisor-chip {
-  padding: var(--space-1) var(--space-3);
+  padding: var(--space-2) var(--space-3);
   background: var(--surface-3);
-  border: 1px solid var(--border);
-  border-radius: 20px;
+  border: 1px solid rgba(139, 148, 158, 0.18);
+  border-radius: var(--radius-md);
   color: var(--text-secondary);
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s ease;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.advisor-chip::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  opacity: 0.5;
+  transition: all 0.2s ease;
 }
 .advisor-chip:hover {
   background: var(--accent-dim);
-  border-color: var(--accent);
+  border-color: rgba(32, 128, 141, 0.4);
   color: var(--accent);
+  transform: translateY(-1px);
+}
+.advisor-chip:hover::before {
+  background: var(--accent);
+  opacity: 1;
 }
 
 .advisor-input-row {
   display: flex;
   gap: var(--space-2);
+  align-items: stretch;
 }
 
 .advisor-input {
@@ -1138,23 +1189,24 @@ body {
   font-family: var(--font-body);
   font-size: var(--text-sm);
   color: var(--text-primary);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: var(--surface-0);
+  border: 1px solid rgba(139, 148, 158, 0.18);
   border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
   outline: none;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .advisor-input::placeholder {
   color: var(--text-muted);
 }
 .advisor-input:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
 .advisor-send-btn {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  min-height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1164,28 +1216,32 @@ body {
   color: #fff;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 .advisor-send-btn:hover {
   background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+.advisor-send-btn:active {
+  transform: translateY(0);
 }
 
 .advisor-response {
   margin-top: 0;
   max-height: 0;
   overflow: hidden;
-  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), margin-top 0.35s ease;
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), margin-top 0.4s ease;
 }
 .advisor-response.visible {
-  margin-top: var(--space-4);
+  margin-top: var(--space-5);
   max-height: 2000px;
 }
 
 .advisor-msg {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-4) var(--space-5);
+  background: var(--surface-0);
+  border: 1px solid rgba(139, 148, 158, 0.15);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-6);
   font-size: var(--text-sm);
   color: var(--text-secondary);
   line-height: 1.7;
@@ -1198,15 +1254,25 @@ body {
 
 .advisor-msg-goal {
   font-size: var(--text-xs);
-  color: var(--text-muted);
+  color: var(--accent);
   margin-bottom: var(--space-3);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-weight: 600;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.advisor-msg-goal::before {
+  content: '';
+  width: 8px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
 }
 
 .advisor-changes {
-  margin: var(--space-3) 0;
+  margin: var(--space-4) 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -1217,10 +1283,11 @@ body {
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
-  background: var(--surface-3);
-  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border-radius: var(--radius-md);
   font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
+  border: 1px solid rgba(139, 148, 158, 0.08);
 }
 
 .advisor-change-label {
@@ -1250,8 +1317,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  margin-top: var(--space-3);
-  padding: var(--space-2) var(--space-4);
+  margin-top: var(--space-4);
+  padding: var(--space-2) var(--space-5);
   background: var(--accent);
   border: none;
   border-radius: var(--radius-md);
@@ -1260,26 +1327,39 @@ body {
   font-size: var(--text-xs);
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 .advisor-apply-btn:hover {
   background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+.advisor-apply-btn:active {
+  transform: translateY(0);
 }
 
 .advisor-note {
   margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
   font-size: var(--text-xs);
   color: var(--text-muted);
   line-height: 1.5;
 }
 
 @media (max-width: 768px) {
+  .advisor-box {
+    padding: var(--space-4);
+  }
   .advisor-suggestions {
     gap: var(--space-1);
   }
   .advisor-chip {
     font-size: 0.625rem;
-    padding: 3px var(--space-2);
+    padding: 4px var(--space-2);
+  }
+  .advisor-chip::before {
+    width: 5px;
+    height: 5px;
   }
 }
 
