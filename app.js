@@ -180,10 +180,9 @@
     return n.toFixed(2) + "%";
   }
 
-  /* Jargon tooltip helper — wraps a term in a hover-explainer span */
-  function jargon(term, tip, leftAlign) {
-    var cls = leftAlign ? "jargon jargon--left" : "jargon";
-    return '<span class="' + cls + '">' + term + '<span class="jargon-tip">' + tip + '</span></span>';
+  /* Jargon tooltip helper — wraps a term with data-tip for fixed tooltip */
+  function jargon(term, tip) {
+    return '<span class="jargon" data-tip="' + tip.replace(/"/g, '&quot;') + '">' + term + '</span>';
   }
 
   /* Auto-replace known jargon in free-text strings (pros/cons/macro) */
@@ -1593,10 +1592,88 @@
   }
 
   /* ------------------------------------------
+     TOOLTIP MANAGER (fixed-position, body-level)
+  ------------------------------------------ */
+  function initTooltipManager() {
+    var tipEl = document.createElement("div");
+    tipEl.className = "jargon-tip-fixed";
+    document.body.appendChild(tipEl);
+
+    var hideTimeout = null;
+
+    function show(target) {
+      var text = target.getAttribute("data-tip");
+      if (!text) { return; }
+      clearTimeout(hideTimeout);
+
+      tipEl.textContent = text;
+      tipEl.classList.remove("below");
+      tipEl.style.left = "0";
+      tipEl.style.top = "0";
+      tipEl.classList.add("visible");
+
+      /* Measure */
+      var rect = target.getBoundingClientRect();
+      var tipRect = tipEl.getBoundingClientRect();
+      var pad = 8;
+
+      /* Horizontal: center on target, clamp to viewport */
+      var left = rect.left + rect.width / 2 - tipRect.width / 2;
+      left = Math.max(pad, Math.min(left, window.innerWidth - tipRect.width - pad));
+
+      /* Vertical: prefer above */
+      var top = rect.top - tipRect.height - pad;
+      var showBelow = false;
+      if (top < pad) {
+        top = rect.bottom + pad;
+        showBelow = true;
+      }
+
+      tipEl.style.left = left + "px";
+      tipEl.style.top = top + "px";
+      if (showBelow) { tipEl.classList.add("below"); }
+
+      /* Arrow position relative to tooltip */
+      var arrowLeft = rect.left + rect.width / 2 - left;
+      arrowLeft = Math.max(10, Math.min(arrowLeft, tipRect.width - 10));
+      tipEl.style.setProperty("--arrow-left", arrowLeft + "px");
+    }
+
+    function hide() {
+      hideTimeout = setTimeout(function () {
+        tipEl.classList.remove("visible", "below");
+      }, 80);
+    }
+
+    /* Event delegation on document — works for dynamically-injected jargon too */
+    document.addEventListener("mouseenter", function (e) {
+      var jargonEl = e.target.closest(".jargon[data-tip]");
+      if (jargonEl) { show(jargonEl); }
+    }, true);
+
+    document.addEventListener("mouseleave", function (e) {
+      var jargonEl = e.target.closest(".jargon[data-tip]");
+      if (jargonEl) { hide(); }
+    }, true);
+
+    /* Touch support */
+    document.addEventListener("touchstart", function (e) {
+      var jargonEl = e.target.closest(".jargon[data-tip]");
+      if (jargonEl) {
+        show(jargonEl);
+        setTimeout(hide, 3000);
+      } else {
+        hide();
+      }
+    }, { passive: true });
+  }
+
+  /* ------------------------------------------
      INITIALIZATION
   ------------------------------------------ */
   function init() {
     initNavigation();
+    initTooltipManager();
 
     /* Render overview (visible tab) */
     renderKPIs();
