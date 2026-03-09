@@ -315,6 +315,27 @@
         <p class="intro-panel-text">This is your <strong>what-if playground</strong>. Use the sliders to experiment with how much of your portfolio goes into each sleeve and each fund. The <strong>lock button</strong> lets you freeze any item so it stays constant while the others auto-adjust to keep the total at 100%. For example, lock Fixed Income at 30%, then slide Equities up &mdash; the other unlocked sleeves will shrink proportionally. The same locking works inside each sleeve for individual funds. Changes here update all other tabs in real time.</p>
       </div>
 
+      <!-- Portfolio Advisor -->
+      <div class="advisor-box" id="advisor-box">
+        <div class="advisor-header">
+          <svg class="advisor-icon" width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8.5" stroke="currentColor" stroke-width="1.5"/><path d="M7 8.5C7 7.12 8.34 6 10 6s3 1.12 3 2.5c0 1.08-.84 1.98-2 2.35V12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="14" r="0.75" fill="currentColor"/></svg>
+          <span>Portfolio Advisor</span>
+        </div>
+        <div class="advisor-suggestions">
+          <button class="advisor-chip" data-query="less risk">Less risk</button>
+          <button class="advisor-chip" data-query="more income">More income</button>
+          <button class="advisor-chip" data-query="more growth">More growth</button>
+          <button class="advisor-chip" data-query="lower fees">Lower fees</button>
+        </div>
+        <div class="advisor-input-row">
+          <input type="text" class="advisor-input" id="advisor-input" placeholder="Ask anything, e.g. &quot;How do I reduce risk?&quot;" autocomplete="off">
+          <button class="advisor-send-btn" id="advisor-send-btn" title="Ask">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 2L7 9M14 2l-4 12-3-5-5-3 12-4z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="advisor-response" id="advisor-response"></div>
+      </div>
+
       <!-- Live KPI strip -->
       <div class="weights-kpi-strip" id="weights-kpi-strip"></div>
 
