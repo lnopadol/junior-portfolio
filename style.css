@@ -274,22 +274,17 @@ body {
 }
 
 /* ============================================
-   JARGON TOOLTIPS
+   JARGON TOOLTIPS (fixed-position, JS-managed)
    ============================================ */
 .jargon {
-  position: relative;
   border-bottom: 1px dashed var(--text-muted);
   cursor: help;
-  white-space: nowrap;
 }
 
-.jargon .jargon-tip {
-  visibility: hidden;
-  opacity: 0;
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
+/* The tooltip element lives in <body> via JS, not inside .jargon */
+.jargon-tip-fixed {
+  position: fixed;
+  z-index: 9999;
   background: var(--surface-4);
   color: var(--text-primary);
   font-size: var(--text-xs);
@@ -299,39 +294,36 @@ body {
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   width: max-content;
-  max-width: 280px;
+  max-width: 300px;
   white-space: normal;
   text-transform: none;
   letter-spacing: normal;
-  z-index: 100;
   pointer-events: none;
-  transition: opacity 0.15s ease, visibility 0.15s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
 }
 
-.jargon .jargon-tip::after {
+.jargon-tip-fixed.visible {
+  opacity: 1;
+}
+
+.jargon-tip-fixed::after {
   content: '';
   position: absolute;
   top: 100%;
-  left: 50%;
+  left: var(--arrow-left, 50%);
   transform: translateX(-50%);
   border: 5px solid transparent;
   border-top-color: var(--surface-4);
 }
 
-.jargon:hover .jargon-tip {
-  visibility: visible;
-  opacity: 1;
-}
-
-/* Prevent tooltip from going off-screen on left-aligned items */
-.jargon--left .jargon-tip {
-  left: 0;
-  transform: none;
-}
-.jargon--left .jargon-tip::after {
-  left: 16px;
-  transform: none;
+/* When tooltip appears below the term instead of above */
+.jargon-tip-fixed.below::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: var(--surface-4);
 }
 
 /* ============================================
