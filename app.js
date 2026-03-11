@@ -315,6 +315,15 @@
         switchTab(tab);
       });
     });
+    /* Mobile bottom nav */
+    var mobileBtns = document.querySelectorAll(".mobile-nav-btn");
+    mobileBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var tab = btn.getAttribute("data-tab");
+        window.location.hash = tab;
+        switchTab(tab);
+      });
+    });
   }
 
   /* Store original (default) weights for reset */
@@ -337,12 +346,15 @@
   }
 
   function switchTab(tabId) {
-    document.querySelectorAll(".nav-btn").forEach(function (b) {
+    /* Update both sidebar and mobile nav */
+    document.querySelectorAll(".nav-btn, .mobile-nav-btn").forEach(function (b) {
       b.classList.remove("active");
       b.removeAttribute("aria-current");
     });
-    document.querySelector("[data-tab=\"" + tabId + "\"]").classList.add("active");
-    document.querySelector("[data-tab=\"" + tabId + "\"]").setAttribute("aria-current", "page");
+    document.querySelectorAll("[data-tab=\"" + tabId + "\"]").forEach(function (b) {
+      b.classList.add("active");
+      b.setAttribute("aria-current", "page");
+    });
 
     document.querySelectorAll(".tab-content").forEach(function (t) {
       t.classList.remove("active");
@@ -354,6 +366,12 @@
 
     /* Scroll main to top */
     document.querySelector(".main").scrollTop = 0;
+
+    /* Scroll active mobile nav button into view */
+    var activeMobileBtn = document.querySelector(".mobile-nav-btn.active");
+    if (activeMobileBtn) {
+      activeMobileBtn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }
 
     /* Resize charts after tab switch (Chart.js needs this) */
     setTimeout(function () {
