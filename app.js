@@ -315,8 +315,8 @@
         switchTab(tab);
       });
     });
-    /* Mobile bottom nav */
-    var mobileBtns = document.querySelectorAll(".mobile-nav-btn");
+    /* Mobile top tab bar */
+    var mobileBtns = document.querySelectorAll(".mobile-tab");
     mobileBtns.forEach(function (btn) {
       btn.addEventListener("click", function () {
         var tab = btn.getAttribute("data-tab");
@@ -347,7 +347,7 @@
 
   function switchTab(tabId) {
     /* Update both sidebar and mobile nav */
-    document.querySelectorAll(".nav-btn, .mobile-nav-btn").forEach(function (b) {
+    document.querySelectorAll(".nav-btn, .mobile-tab").forEach(function (b) {
       b.classList.remove("active");
       b.removeAttribute("aria-current");
     });
@@ -367,10 +367,10 @@
     /* Scroll main to top */
     document.querySelector(".main").scrollTop = 0;
 
-    /* Scroll active mobile nav button into view */
-    var activeMobileBtn = document.querySelector(".mobile-nav-btn.active");
-    if (activeMobileBtn) {
-      activeMobileBtn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    /* Scroll active mobile tab into view */
+    var activeMobileTab = document.querySelector(".mobile-tab.active");
+    if (activeMobileTab) {
+      activeMobileTab.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
     }
 
     /* Resize charts after tab switch (Chart.js needs this) */
