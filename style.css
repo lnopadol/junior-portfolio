@@ -1750,68 +1750,54 @@ input[type="range"].w-range::-moz-range-track {
 }
 
 /* ============================================
-   MOBILE BOTTOM NAV
+   MOBILE TOP TAB BAR (KKP Wealth style)
    ============================================ */
-.mobile-nav {
+.mobile-tab-bar {
   display: none;
 }
 
 @media (max-width: 768px) {
-  .mobile-nav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    background: var(--surface-1);
-    border-top: 1px solid var(--border);
-    padding: var(--space-1) 0;
-    padding-bottom: calc(var(--space-1) + env(safe-area-inset-bottom, 0px));
+  .mobile-tab-bar {
+    display: block;
     overflow-x: auto;
-    overflow-y: hidden;
+    white-space: nowrap;
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-1);
+    position: sticky;
+    top: 0;
+    z-index: 50;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    gap: 0;
   }
-  .mobile-nav::-webkit-scrollbar {
+  .mobile-tab-bar::-webkit-scrollbar {
     display: none;
   }
-  .mobile-nav-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    min-width: 56px;
-    flex: 1 0 auto;
-    padding: 6px 4px 4px;
-    background: transparent;
+  .mobile-tab {
+    display: inline-block;
+    padding: var(--space-2) var(--space-3);
     border: none;
-    color: var(--text-muted);
+    background: transparent;
+    color: var(--text-secondary);
     font-family: var(--font-body);
-    font-size: 9px;
+    font-size: var(--text-sm);
     font-weight: 500;
     cursor: pointer;
-    transition: color 0.15s ease;
+    border-radius: var(--radius-md);
+    transition: all 0.15s ease;
+    margin-right: var(--space-1);
     -webkit-tap-highlight-color: transparent;
   }
-  .mobile-nav-btn svg {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
+  .mobile-tab:hover {
+    background: var(--surface-2);
   }
-  .mobile-nav-btn.active {
+  .mobile-tab.active {
+    background: var(--accent-dim);
     color: var(--accent);
+    font-weight: 600;
   }
-  .mobile-nav-btn:active {
-    color: var(--accent);
+  .mobile-tab:active {
     opacity: 0.8;
-  }
-
-  /* Make room for the bottom nav */
-  .main {
-    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
   }
 }
 
