@@ -67,6 +67,12 @@
         <li><button class="nav-btn" data-tab="compounding">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 15 L6 10 L10 12 L16 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3h4v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Compounding</button></li>
+        <li><button class="nav-btn" data-tab="backtest">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2 14L6 8l4 4 6-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 4h2v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Backtest</button></li>
+        <li><button class="nav-btn" data-tab="projection">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M9 5v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Projection</button></li>
       </ul>
     </nav>
     <div class="sidebar-footer">
@@ -87,6 +93,8 @@
       <button class="mobile-tab" data-tab="proscons">Pro/Con</button>
       <button class="mobile-tab" data-tab="weights">Weights</button>
       <button class="mobile-tab" data-tab="compounding">Growth</button>
+      <button class="mobile-tab" data-tab="backtest">Backtest</button>
+      <button class="mobile-tab" data-tab="projection">Projection</button>
     </div>
     <!-- Tab: Overview -->
     <section class="tab-content active" id="tab-overview">
@@ -451,12 +459,137 @@
       </div>
     </section>
 
+    <!-- Tab: Backtest -->
+    <section class="tab-content" id="tab-backtest">
+      <div class="page-header">
+        <h1>Backtest Results</h1>
+        <p class="page-subtitle">Historical performance simulation from Aug 2017 to Mar 2026</p>
+      </div>
+      <div class="intro-panel">
+        <p class="intro-panel-text">A <span class="jargon" data-tip="A backtest simulates how a portfolio would have performed using real historical market data. It's like a time machine for your investments.">backtest</span> shows how this portfolio <strong>would have performed</strong> if you had invested in it in the past. We use real ETF price data for offshore holdings and estimated returns for Thai funds. This helps you understand the portfolio's behavior during market crashes, recoveries, and calm periods. <strong>Important:</strong> past performance does not guarantee future results — but it reveals how different holdings work together through real market stress.</p>
+      </div>
+      <div class="kpi-grid" id="backtest-kpi-grid"></div>
+      <div class="card">
+        <h2 class="card-title">Portfolio Growth (฿1,000,000 start)</h2>
+        <div class="chart-container chart-container--wide">
+          <canvas id="chart-backtest-growth"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Drawdown Over Time</h2>
+        <p class="card-desc">How far the portfolio dropped from its peak at each point — deeper means bigger temporary loss</p>
+        <div class="chart-container chart-container--wide">
+          <canvas id="chart-backtest-drawdown"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Annual Returns</h2>
+        <div class="chart-container chart-container--tall">
+          <canvas id="chart-backtest-annual"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Holding Performance</h2>
+        <div class="table-wrapper">
+          <table class="data-table" id="backtest-holdings-table">
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th>Sleeve</th>
+                <th class="num"><span class="jargon" data-tip="Annualized Return — the average yearly return, accounting for compounding.">Ann. Return</span></th>
+                <th class="num"><span class="jargon" data-tip="Annualized Volatility — how much the returns swing up and down each year. Higher means more unpredictable.">Ann. Volatility</span></th>
+                <th class="num">Total Return</th>
+                <th class="num"><span class="jargon" data-tip="Sharpe Ratio — measures return per unit of risk. Higher is better. Above 1.0 is considered good.">Sharpe</span></th>
+              </tr>
+            </thead>
+            <tbody id="backtest-holdings-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h2 class="card-title">Additional Risk Metrics</h2>
+        <div class="metrics-grid" id="backtest-risk-metrics"></div>
+      </div>
+    </section>
+
+    <!-- Tab: Projection -->
+    <section class="tab-content" id="tab-projection">
+      <div class="page-header">
+        <h1>Future Projection</h1>
+        <p class="page-subtitle">Monte Carlo simulation and scenario modeling for your portfolio</p>
+      </div>
+      <div class="intro-panel">
+        <p class="intro-panel-text">Imagine running your portfolio <strong>1,000 times</strong> into the future, each with slightly different market conditions. That's a <span class="jargon" data-tip="Monte Carlo simulation — a method that uses random sampling to model the probability of different outcomes. Named after the famous casino.">Monte Carlo simulation</span>. Instead of predicting one outcome, it shows the <strong>range of outcomes</strong> you might expect — from worst case to best case. The colored bands on the chart represent different probability levels: the darker the band, the more likely that outcome. This helps you set realistic expectations and plan for uncertainty.</p>
+      </div>
+      <div class="card projection-controls-card">
+        <h2 class="card-title">Simulation Controls</h2>
+        <div class="projection-controls">
+          <div class="input-group">
+            <label for="proj-investment">Investment (THB)</label>
+            <input type="text" id="proj-investment" value="1,000,000" class="investment-input" inputmode="numeric">
+          </div>
+          <div class="input-group">
+            <label for="proj-horizon">Time Horizon: <span id="proj-horizon-val">20</span> years</label>
+            <input type="range" id="proj-horizon" min="5" max="30" value="20" class="projection-slider">
+          </div>
+          <div class="input-group">
+            <label for="proj-monthly">Monthly Contribution (THB)</label>
+            <input type="text" id="proj-monthly" value="0" class="investment-input" inputmode="numeric">
+          </div>
+          <button class="btn-accent" id="proj-run-btn">Run Simulation</button>
+        </div>
+      </div>
+      <div class="card" id="proj-fan-card" style="display:none">
+        <h2 class="card-title">Monte Carlo Fan Chart</h2>
+        <p class="card-desc">1,000 simulated paths — bands show probability ranges from P5 (worst) to P95 (best)</p>
+        <div class="chart-container chart-container--wide">
+          <canvas id="chart-projection-fan"></canvas>
+        </div>
+      </div>
+      <div class="kpi-grid" id="proj-outcome-grid" style="display:none"></div>
+      <div class="card" id="proj-scenario-card" style="display:none">
+        <h2 class="card-title">Scenario Comparison</h2>
+        <div class="table-wrapper">
+          <table class="data-table" id="proj-scenario-table">
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th class="num">Conservative (P10)</th>
+                <th class="num">Expected (P50)</th>
+                <th class="num">Optimistic (P90)</th>
+              </tr>
+            </thead>
+            <tbody id="proj-scenario-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" id="proj-target-card" style="display:none">
+        <h2 class="card-title">Target Achievement</h2>
+        <div class="target-input-row">
+          <div class="input-group">
+            <label for="proj-target">Target Value (THB)</label>
+            <input type="text" id="proj-target" value="2,000,000" class="investment-input" inputmode="numeric">
+          </div>
+          <button class="btn-accent" id="proj-target-btn">Check Probability</button>
+          <div class="target-result" id="proj-target-result"></div>
+        </div>
+      </div>
+      <div class="card methodology-card" id="proj-methodology-card" style="display:none">
+        <h2 class="card-title">Methodology Notes</h2>
+        <div class="methodology-content">
+          <p id="proj-method-params"></p>
+          <p class="methodology-disclaimer"><strong>Disclaimer:</strong> This simulation is for educational purposes only and does not constitute financial advice. Past performance and statistical models do not guarantee future results. Actual returns may differ significantly from simulated outcomes.</p>
+        </div>
+      </div>
+    </section>
+
     <footer class="dashboard-footer">
       <span>Junior Portfolio Dashboard — For educational purposes only</span>
       <a href="https://www.perplexity.ai/computer" target="_blank" rel="noopener noreferrer">Created with Perplexity Computer</a>
     </footer>
   </main>
 </div>
+<script src="./backtest-data.js"></script>
 <script src="./app.js" defer></script>
 </body>
 </html>
