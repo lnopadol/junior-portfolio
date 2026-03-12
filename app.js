@@ -329,7 +329,7 @@
   /* Store original (default) weights for reset */
   var DEFAULT_WEIGHTS = HOLDINGS.map(function (h) { return h.target; });
 
-  var tabInitialized = { overview: true, geography: false, sectors: false, diversification: false, learn: false, proscons: false, weights: false, compounding: false };
+  var tabInitialized = { overview: true, geography: false, sectors: false, diversification: false, learn: false, proscons: false, weights: false, compounding: false, backtest: false, projection: false };
 
   function initTab(tabId) {
     if (tabInitialized[tabId]) { return; }
@@ -342,6 +342,8 @@
       case "proscons": renderProsConsCards(); break;
       case "weights": renderWeightsTab(); break;
       case "compounding": renderCompounding(); initCompoundingInput(); break;
+      case "backtest": renderBacktest(); break;
+      case "projection": renderProjection(); break;
     }
   }
 
@@ -1683,6 +1685,8 @@
     tabInitialized.learn = false;
     tabInitialized.proscons = false;
     tabInitialized.compounding = false;
+    tabInitialized.backtest = false;
+    tabInitialized.projection = false;
 
     var activeTab = document.querySelector('.tab-content.active');
     if (activeTab) {
@@ -1691,6 +1695,524 @@
         initTab(activeId);
       }
     }
+  }
+
+  /* ------------------------------------------
+     TAB 8: BACKTEST
+  ------------------------------------------ */
+  function renderBacktest() {
+    var rm = BACKTEST_DATA.riskMetrics;
+
+    /* KPI strip */
+    var kpiGrid = document.getElementById("backtest-kpi-grid");
+    kpiGrid.innerHTML =
+      "<div class=\"kpi-card\"><span class=\"kpi-label\">Total Return</span><span class=\"kpi-value positive\">" + fmtPct(rm.totalReturn) + "</span></div>" +
+      "<div class=\"kpi-card\"><span class=\"kpi-label\">Annualized Return</span><span class=\"kpi-value positive\">" + fmtPct(rm.annReturn) + "</span></div>" +
+      "<div class=\"kpi-card\"><span class=\"kpi-label\">Max Drawdown</span><span class=\"kpi-value negative\">" + fmtPct(rm.maxDD) + "</span></div>" +
+      "<div class=\"kpi-card\"><span class=\"kpi-label\">Sharpe Ratio</span><span class=\"kpi-value\">" + rm.sharpe.toFixed(2) + "</span></div>";
+
+    /* Portfolio Growth Chart */
+    var ctx1 = document.getElementById("chart-backtest-growth").getContext("2d");
+    if (charts.backtestGrowth) { charts.backtestGrowth.destroy(); }
+    charts.backtestGrowth = new Chart(ctx1, {
+      type: "line",
+      data: {
+        labels: BACKTEST_DATA.months,
+        datasets: [{
+          label: "Portfolio Value",
+          data: BACKTEST_DATA.portfolioCumulative,
+          borderColor: "#20808D",
+          backgroundColor: "rgba(32,128,141,0.15)",
+          fill: true,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function (ctx2) {
+                return "Value: ฿" + fmt(ctx2.raw, 0);
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            ticks: {
+              callback: function (v) {
+                if (v >= 1000000) { return "฿" + (v / 1000000).toFixed(1) + "M"; }
+                return "฿" + fmt(v, 0);
+              }
+            },
+            grid: { color: "rgba(139,148,158,0.06)" }
+          },
+          x: {
+            ticks: { maxTicksLimit: 12, maxRotation: 45 },
+            grid: { color: "rgba(139,148,158,0.04)" }
+          }
+        }
+      }
+    });
+
+    /* Drawdown Chart */
+    var ctx2 = document.getElementById("chart-backtest-drawdown").getContext("2d");
+    if (charts.backtestDrawdown) { charts.backtestDrawdown.destroy(); }
+    charts.backtestDrawdown = new Chart(ctx2, {
+      type: "line",
+      data: {
+        labels: BACKTEST_DATA.months,
+        datasets: [{
+          label: "Drawdown",
+          data: BACKTEST_DATA.drawdowns,
+          borderColor: "#A84B2F",
+          backgroundColor: "rgba(168,75,47,0.25)",
+          fill: true,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          borderWidth: 1.5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function (ctx3) {
+                return "Drawdown: " + (ctx3.raw * 100).toFixed(2) + "%";
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            ticks: {
+              callback: function (v) { return (v * 100).toFixed(0) + "%"; }
+            },
+            grid: { color: "rgba(139,148,158,0.06)" }
+          },
+          x: {
+            ticks: { maxTicksLimit: 12, maxRotation: 45 },
+            grid: { color: "rgba(139,148,158,0.04)" }
+          }
+        }
+      }
+    });
+
+    /* Annual Returns Bar Chart */
+    var annualYears = Object.keys(BACKTEST_DATA.annualReturns).sort();
+    var annualValues = annualYears.map(function (y) { return BACKTEST_DATA.annualReturns[y]; });
+    var barColors = annualValues.map(function (v) { return v >= 0 ? "#437a22" : "#A84B2F"; });
+
+    var ctx3 = document.getElementById("chart-backtest-annual").getContext("2d");
+    if (charts.backtestAnnual) { charts.backtestAnnual.destroy(); }
+    charts.backtestAnnual = new Chart(ctx3, {
+      type: "bar",
+      data: {
+        labels: annualYears,
+        datasets: [{
+          label: "Annual Return",
+          data: annualValues,
+          backgroundColor: barColors,
+          borderRadius: 4,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function (ctx4) {
+                return "Return: " + (ctx4.raw * 100).toFixed(2) + "%";
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            ticks: {
+              callback: function (v) { return (v * 100).toFixed(0) + "%"; }
+            },
+            grid: { color: "rgba(139,148,158,0.06)" }
+          },
+          x: {
+            grid: { display: false }
+          }
+        }
+      }
+    });
+
+    /* Holding Performance Table */
+    var tbody = document.getElementById("backtest-holdings-tbody");
+    var holdingRows = [];
+    HOLDINGS.forEach(function (h) {
+      var hm = BACKTEST_DATA.holdingMetrics[h.ticker];
+      if (hm) {
+        holdingRows.push({
+          ticker: h.ticker,
+          sleeve: h.sleeve,
+          annReturn: hm.annReturn,
+          annVol: hm.annVol,
+          totalReturn: hm.totalReturn,
+          sharpe: hm.sharpe
+        });
+      }
+    });
+    tbody.innerHTML = holdingRows.map(function (r) {
+      return "<tr>" +
+        "<td>" + r.ticker + "</td>" +
+        "<td>" + r.sleeve + "</td>" +
+        "<td class=\"num " + (r.annReturn >= 0 ? "positive" : "negative") + "\">" + fmtPct(r.annReturn) + "</td>" +
+        "<td class=\"num\">" + fmtPct(r.annVol) + "</td>" +
+        "<td class=\"num " + (r.totalReturn >= 0 ? "positive" : "negative") + "\">" + fmtPct(r.totalReturn) + "</td>" +
+        "<td class=\"num\">" + r.sharpe.toFixed(2) + "</td>" +
+        "</tr>";
+    }).join("");
+
+    /* Additional Risk Metrics */
+    var riskDiv = document.getElementById("backtest-risk-metrics");
+    var winRate = rm.positiveMonths / rm.totalMonths;
+    riskDiv.innerHTML =
+      "<div class=\"metric-item\"><div class=\"metric-label\">Calmar Ratio</div><div class=\"metric-value\">" + rm.calmar.toFixed(2) + "</div></div>" +
+      "<div class=\"metric-item\"><div class=\"metric-label\">Best Month</div><div class=\"metric-value positive\">" + fmtPct(rm.bestMonthRet) + "<br><small style=\"color:var(--text-secondary);font-size:var(--text-xs)\">" + rm.bestMonth + "</small></div></div>" +
+      "<div class=\"metric-item\"><div class=\"metric-label\">Worst Month</div><div class=\"metric-value negative\">" + fmtPct(rm.worstMonthRet) + "<br><small style=\"color:var(--text-secondary);font-size:var(--text-xs)\">" + rm.worstMonth + "</small></div></div>" +
+      "<div class=\"metric-item\"><div class=\"metric-label\">Win Rate</div><div class=\"metric-value\">" + (winRate * 100).toFixed(1) + "%<br><small style=\"color:var(--text-secondary);font-size:var(--text-xs)\">" + rm.positiveMonths + " / " + rm.totalMonths + " months</small></div></div>";
+  }
+
+  /* ------------------------------------------
+     TAB 9: FUTURE PROJECTION
+  ------------------------------------------ */
+  function runMonteCarlo(investment, horizon, monthly) {
+    /* Convert annual metrics to monthly */
+    var annMean = BACKTEST_DATA.riskMetrics.annReturn;
+    var annVol = BACKTEST_DATA.riskMetrics.annVol;
+    var monthlyMean = annMean / 12;
+    var monthlyVol = annVol / Math.sqrt(12);
+    var totalMonths = horizon * 12;
+    var numSims = 1000;
+
+    /* Box-Muller transform for normal random */
+    function randNorm() {
+      var u1 = Math.random();
+      var u2 = Math.random();
+      return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    }
+
+    /* Run simulations */
+    var allPaths = [];
+    for (var s = 0; s < numSims; s++) {
+      var path = [investment];
+      var val = investment;
+      for (var m = 1; m <= totalMonths; m++) {
+        var r = monthlyMean + monthlyVol * randNorm();
+        val = val * (1 + r) + monthly;
+        /* Record at each year mark */
+        if (m % 12 === 0) {
+          path.push(val);
+        }
+      }
+      allPaths.push(path);
+    }
+
+    /* Compute percentiles at each year */
+    var percentiles = [5, 10, 25, 50, 75, 90, 95];
+    var bands = {};
+    percentiles.forEach(function (p) { bands["p" + p] = []; });
+
+    for (var y = 0; y <= horizon; y++) {
+      var vals = allPaths.map(function (path) { return path[y]; }).sort(function (a, b) { return a - b; });
+      percentiles.forEach(function (p) {
+        var idx = Math.floor(vals.length * p / 100);
+        idx = Math.min(idx, vals.length - 1);
+        bands["p" + p].push(vals[idx]);
+      });
+    }
+
+    /* Count outcomes */
+    var finalValues = allPaths.map(function (path) { return path[path.length - 1]; });
+    var doublingCount = finalValues.filter(function (v) { return v >= 2 * investment; }).length;
+    var lossCount = finalValues.filter(function (v) { return v < investment; }).length;
+
+    return {
+      bands: bands,
+      horizon: horizon,
+      investment: investment,
+      monthly: monthly,
+      probDoubling: doublingCount / numSims,
+      probLoss: lossCount / numSims,
+      allPaths: allPaths,
+      finalValues: finalValues
+    };
+  }
+
+  function renderProjectionCharts(results) {
+    var bands = results.bands;
+    var horizon = results.horizon;
+    var labels = [];
+    for (var y = 0; y <= horizon; y++) { labels.push("Year " + y); }
+
+    /* Fan Chart */
+    var ctx = document.getElementById("chart-projection-fan").getContext("2d");
+    if (charts.projectionFan) { charts.projectionFan.destroy(); }
+    charts.projectionFan = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "P95",
+            data: bands.p95,
+            borderColor: "rgba(32,128,141,0.3)",
+            backgroundColor: "rgba(32,128,141,0.05)",
+            fill: "+1",
+            tension: 0.3,
+            pointRadius: 0,
+            borderWidth: 1
+          },
+          {
+            label: "P90",
+            data: bands.p90,
+            borderColor: "rgba(32,128,141,0.4)",
+            backgroundColor: "rgba(32,128,141,0.08)",
+            fill: "+1",
+            tension: 0.3,
+            pointRadius: 0,
+            borderWidth: 1
+          },
+          {
+            label: "P75",
+            data: bands.p75,
+            borderColor: "rgba(32,128,141,0.5)",
+            backgroundColor: "rgba(32,128,141,0.12)",
+            fill: "+1",
+            tension: 0.3,
+            pointRadius: 0,
+            borderWidth: 1
+          },
+          {
+            label: "P50 (Median)",
+            data: bands.p50,
+            borderColor: "#20808D",
+            backgroundColor: "rgba(32,128,141,0.12)",
+            fill: "+1",
+            tension: 0.3,
+            pointRadius: 3,
+            borderWidth: 2.5
+          },
+          {
+            label: "P25",
+            data: bands.p25,
+            borderColor: "rgba(32,128,141,0.5)",
+            backgroundColor: "rgba(32,128,141,0.12)",
+            fill: "+1",
+            tension: 0.3,
+            pointRadius: 0,
+            borderWidth: 1
+          },
+          {
+            label: "P10",
+            data: bands.p10,
+            borderColor: "rgba(32,128,141,0.4)",
+            backgroundColor: "rgba(32,128,141,0.08)",
+            fill: "+1",
+            tension: 0.3,
+            pointRadius: 0,
+            borderWidth: 1
+          },
+          {
+            label: "P5",
+            data: bands.p5,
+            borderColor: "rgba(32,128,141,0.3)",
+            backgroundColor: "transparent",
+            fill: false,
+            tension: 0.3,
+            pointRadius: 0,
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: {
+            labels: {
+              filter: function (item) {
+                return ["P5", "P25", "P50 (Median)", "P75", "P95"].indexOf(item.text) !== -1;
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function (ctx2) {
+                return ctx2.dataset.label + ": ฿" + fmt(ctx2.raw, 0);
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            ticks: {
+              callback: function (v) {
+                if (v >= 1000000) { return "฿" + (v / 1000000).toFixed(1) + "M"; }
+                return "฿" + fmt(v, 0);
+              }
+            },
+            grid: { color: "rgba(139,148,158,0.06)" }
+          },
+          x: {
+            grid: { color: "rgba(139,148,158,0.04)" }
+          }
+        }
+      }
+    });
+
+    /* Outcome KPIs */
+    var outcomeGrid = document.getElementById("proj-outcome-grid");
+    outcomeGrid.innerHTML =
+      "<div class=\"kpi-card\"><span class=\"kpi-label\">Median Final Value (P50)</span><span class=\"kpi-value\">฿" + fmt(bands.p50[bands.p50.length - 1], 0) + "</span></div>" +
+      "<div class=\"kpi-card\"><span class=\"kpi-label\">Best Case (P95)</span><span class=\"kpi-value positive\">฿" + fmt(bands.p95[bands.p95.length - 1], 0) + "</span></div>" +
+      "<div class=\"kpi-card\"><span class=\"kpi-label\">Worst Case (P5)</span><span class=\"kpi-value negative\">฿" + fmt(bands.p5[bands.p5.length - 1], 0) + "</span></div>" +
+      "<div class=\"kpi-card\"><span class=\"kpi-label\">Prob. of Doubling</span><span class=\"kpi-value\">" + (results.probDoubling * 100).toFixed(1) + "%</span></div>" +
+      "<div class=\"kpi-card\"><span class=\"kpi-label\">Prob. of Loss</span><span class=\"kpi-value " + (results.probLoss > 0.1 ? "negative" : "") + "\">" + (results.probLoss * 100).toFixed(1) + "%</span></div>";
+
+    /* Scenario Table */
+    var scenarioTbody = document.getElementById("proj-scenario-tbody");
+    var checkpoints = [5, 10, 15, 20].filter(function (y) { return y <= results.horizon; });
+    scenarioTbody.innerHTML = checkpoints.map(function (y) {
+      return "<tr>" +
+        "<td class=\"num\">Year " + y + "</td>" +
+        "<td class=\"num\">฿" + fmt(bands.p10[y], 0) + "</td>" +
+        "<td class=\"num\">฿" + fmt(bands.p50[y], 0) + "</td>" +
+        "<td class=\"num\">฿" + fmt(bands.p90[y], 0) + "</td>" +
+        "</tr>";
+    }).join("");
+
+    /* Methodology params */
+    var methodParams = document.getElementById("proj-method-params");
+    var annMean = BACKTEST_DATA.riskMetrics.annReturn;
+    var annVol = BACKTEST_DATA.riskMetrics.annVol;
+    methodParams.innerHTML =
+      "<strong>Parameters:</strong> Mean annual return " + fmtPct(annMean) + " | Annual volatility " + fmtPct(annVol) + " | " +
+      "Monthly mean " + (annMean / 12 * 100).toFixed(3) + "% | Monthly vol " + (annVol / Math.sqrt(12) * 100).toFixed(3) + "% | 1,000 simulations";
+
+    /* Show hidden cards */
+    document.getElementById("proj-fan-card").style.display = "";
+    document.getElementById("proj-outcome-grid").style.display = "";
+    document.getElementById("proj-scenario-card").style.display = "";
+    document.getElementById("proj-target-card").style.display = "";
+    document.getElementById("proj-methodology-card").style.display = "";
+  }
+
+  function renderProjection() {
+    var investInput = document.getElementById("proj-investment");
+    var horizonSlider = document.getElementById("proj-horizon");
+    var monthlyInput = document.getElementById("proj-monthly");
+    var runBtn = document.getElementById("proj-run-btn");
+    var targetInput = document.getElementById("proj-target");
+    var targetBtn = document.getElementById("proj-target-btn");
+    var targetResult = document.getElementById("proj-target-result");
+    var horizonLabel = document.getElementById("proj-horizon-val");
+
+    /* Set initial investment value */
+    investInput.value = currentInvestment.toLocaleString("en-US");
+
+    /* Horizon slider label update */
+    function updateHorizonLabel() {
+      if (horizonLabel) {
+        horizonLabel.textContent = horizonSlider.value;
+      }
+    }
+    horizonSlider.addEventListener("input", updateHorizonLabel);
+    updateHorizonLabel();
+
+    /* Store last simulation results for target calculation */
+    var lastResults = null;
+
+    /* Run simulation on button click */
+    runBtn.addEventListener("click", function () {
+      var inv = parseInt(investInput.value.replace(/[^0-9]/g, ""), 10) || currentInvestment;
+      var horizon = parseInt(horizonSlider.value, 10);
+      var monthly = parseInt(monthlyInput.value.replace(/[^0-9]/g, ""), 10) || 0;
+
+      runBtn.textContent = "Running…";
+      runBtn.disabled = true;
+
+      /* Use setTimeout to allow UI update */
+      setTimeout(function () {
+        lastResults = runMonteCarlo(inv, horizon, monthly);
+        renderProjectionCharts(lastResults);
+        runBtn.textContent = "Run Simulation";
+        runBtn.disabled = false;
+      }, 50);
+    });
+
+    /* Format investment input */
+    investInput.addEventListener("input", function () {
+      var raw = investInput.value.replace(/[^0-9]/g, "");
+      var num = parseInt(raw, 10);
+      if (!isNaN(num) && num > 0) {
+        investInput.value = num.toLocaleString("en-US");
+      }
+    });
+
+    /* Format monthly contribution input */
+    monthlyInput.addEventListener("input", function () {
+      var raw = monthlyInput.value.replace(/[^0-9]/g, "");
+      var num = parseInt(raw, 10);
+      if (!isNaN(num) && num > 0) {
+        monthlyInput.value = num.toLocaleString("en-US");
+      }
+    });
+
+    /* Target achievement */
+    targetBtn.addEventListener("click", function () {
+      if (!lastResults) {
+        targetResult.textContent = "Please run the simulation first.";
+        return;
+      }
+      var targetVal = parseInt(targetInput.value.replace(/[^0-9]/g, ""), 10);
+      if (!targetVal || targetVal <= 0) {
+        targetResult.textContent = "Please enter a valid target amount.";
+        return;
+      }
+
+      /* Probability of reaching target */
+      var reachCount = lastResults.finalValues.filter(function (v) { return v >= targetVal; }).length;
+      var prob = (reachCount / lastResults.finalValues.length * 100).toFixed(1);
+
+      /* Expected time to reach (median path) */
+      var bands = lastResults.bands;
+      var yearsToReach = ">" + lastResults.horizon;
+      for (var y = 0; y <= lastResults.horizon; y++) {
+        if (bands.p50[y] >= targetVal) {
+          yearsToReach = y.toString();
+          break;
+        }
+      }
+
+      targetResult.innerHTML =
+        "<strong>Probability of reaching ฿" + fmt(targetVal, 0) + ":</strong> " + prob + "%<br>" +
+        "<strong>Expected time (median path):</strong> " + yearsToReach + " years";
+    });
+
+    /* Auto-run initial simulation */
+    runBtn.click();
   }
 
   /* ------------------------------------------
